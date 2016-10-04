@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
-    <meta name="description" content="Draw polylines with different material appearances.">
-    <meta name="cesium-sandcastle-labels" content="Development">
+    <meta name="description" content="Demonstrates the wide variety of available geometry and appearances.">
+    <meta name="cesium-sandcastle-labels" content="Showcases">
     <title>Cesium Demo</title>
     <script type="text/javascript" src="../Sandcastle-header.js"></script>
     <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
@@ -27,26 +27,39 @@
 function startup(Cesium) {
     'use strict';
 //Sandcastle_Begin
-var viewer = new Cesium.Viewer('cesiumContainer');
-var scene = viewer.scene;
+Cesium.Math.setRandomNumberSeed(1234);
 
-// Polyline Outline
-scene.primitives.add(new Cesium.Primitive({
-    geometryInstances : new Cesium.GeometryInstance({
-        geometry : new Cesium.PolylineGeometry({
-            positions : Cesium.Cartesian3.fromDegreesArray([
-                -120.0, 30.0,
-                -80.0, 30.0
-            ]),
-            width : 10.0,
-            vertexFormat : Cesium.PolylineMaterialAppearance.VERTEX_FORMAT
+var viewer = new Cesium.Viewer('cesiumContainer', { infoBox : false });
+var entities = viewer.entities;
+
+var i;
+var height;
+var positions;
+var stripeMaterial = new Cesium.StripeMaterialProperty({
+    evenColor : Cesium.Color.WHITE.withAlpha(0.5),
+    oddColor : Cesium.Color.BLUE.withAlpha(0.5),
+    repeat : 5.0
+});
+
+
+positions = [];
+for (i = 0; i < 40; ++i) {
+    positions.push(Cesium.Cartesian3.fromDegrees(-100.0 + i, 15.0));
+}
+
+entities.add({
+    polyline : {
+        positions : positions,
+        width : 10.0,
+        material : new Cesium.PolylineGlowMaterialProperty({
+            color : Cesium.Color.DEEPSKYBLUE,
+            glowPower : 0.25
         })
-    }),
-    appearance : new Cesium.PolylineMaterialAppearance({
-        material : Cesium.Material.fromType(Cesium.Material.PolylineOutlineType),
-        fragmentShaderSource : Cesium.PolylineDashFS
-    })
-}));
+    }
+});
+
+
+viewer.zoomTo(viewer.entities);
 //Sandcastle_End
     Sandcastle.finishedLoading();
 }
