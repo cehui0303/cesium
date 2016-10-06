@@ -43,8 +43,11 @@ scene.primitives.add(new Cesium.Primitive({
         })
     }),
     appearance : new Cesium.PolylineMaterialAppearance({
-        material : Cesium.Material.fromType(Cesium.Material.PolylineOutlineType),
-        fragmentShaderSource : Cesium.PolylineDashFS
+        material : new Cesium.Material({
+            fabric : {
+                source : Cesium.PolylineDashMaterial
+            }
+        })
     })
 }));
 //Sandcastle_End
