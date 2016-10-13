@@ -29,22 +29,6 @@ function startup(Cesium) {
 //Sandcastle_Begin
 var viewer = new Cesium.Viewer('cesiumContainer');
 var scene = viewer.scene;
-var dashShader = "uniform vec4 color;\n\
-\n\
-varying float v_width;\n\
-\n\
-czm_material czm_getMaterial(czm_materialInput materialInput)\n\
-{\n\
-    czm_material material = czm_getDefaultMaterial(materialInput);\n\
-\n\
-    vec2 st = materialInput.st;\n\
-    float dash = smoothstep(.475, .525, mod(st.s * 10., 1.));\n\
-    material.diffuse = vec3(1.0, 0.0, 1.0);\n\
-    material.alpha = dash;\n\
-\n\
-    return material;\n\
-}\n\
-";
 
 // Polyline Outline
 scene.primitives.add(new Cesium.Primitive({
@@ -58,12 +42,8 @@ scene.primitives.add(new Cesium.Primitive({
             vertexFormat : Cesium.PolylineMaterialAppearance.VERTEX_FORMAT
         })
     }),
-    appearance : new Cesium.PolylineMaterialAppearance({
-        material : new Cesium.Material({
-            fabric : {
-                source : dashShader
-            }
-        })
+    appearance : new Cesium.PolylineDashMaterialAppearance({
+        material : Cesium.Material.fromType(Cesium.Material.PolylineGlowType)
     })
 }));
 //Sandcastle_End
