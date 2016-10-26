@@ -24,6 +24,7 @@ define([
         '../Shaders/Materials/GridMaterial',
         '../Shaders/Materials/NormalMapMaterial',
         '../Shaders/Materials/PolylineArrowMaterial',
+        '../Shaders/Materials/PolylineDashMaterial',
         '../Shaders/Materials/PolylineGlowMaterial',
         '../Shaders/Materials/PolylineOutlineMaterial',
         '../Shaders/Materials/RimLightingMaterial',
@@ -55,6 +56,7 @@ define([
         GridMaterial,
         NormalMapMaterial,
         PolylineArrowMaterial,
+        PolylineDashMaterial,
         PolylineGlowMaterial,
         PolylineOutlineMaterial,
         RimLightingMaterial,
@@ -1349,6 +1351,24 @@ define([
                 color : new Color(1.0, 1.0, 1.0, 1.0)
             },
             source : PolylineArrowMaterial
+        },
+        translucent : true
+    });
+
+    /**
+     * Gets the name of the polyline glow material.
+     * @type {String}
+     * @readonly
+     */
+    Material.PolylineDashType = 'PolylineDash';
+    Material._materialCache.addMaterial(Material.PolylineDashType, {
+        fabric : {
+            type : Material.PolylineDashType,
+            uniforms : {
+                color : new Color(1.0, 0.0, 1.0, 1.0),
+                duty : 0.5
+            },
+            source : PolylineDashMaterial
         },
         translucent : true
     });
