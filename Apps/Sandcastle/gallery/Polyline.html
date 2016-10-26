@@ -29,6 +29,19 @@ function startup(Cesium) {
 //Sandcastle_Begin
 var viewer = new Cesium.Viewer('cesiumContainer');
 
+var dashedLine = viewer.entities.add({
+    name : 'Dashed red line on the surface',
+    polyline : {
+        positions : Cesium.Cartesian3.fromDegreesArray([-75, 30,
+                                                        -125, 30]),
+        width : 5,
+        material : new Cesium.PolylineDashMaterialProperty({
+            duty : 0.4,
+            color : Cesium.Color.RED
+        })
+    }
+});
+
 var redLine = viewer.entities.add({
     name : 'Red line on the surface',
     polyline : {
