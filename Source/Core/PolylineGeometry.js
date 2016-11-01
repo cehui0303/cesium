@@ -377,6 +377,7 @@ define([
         var stIndex = 0;
         var colorIndex = 0;
         var position;
+        var arcLength = 0.0;
 
         for (j = 0; j < positionsLength; ++j) {
             if (j === 0) {
@@ -389,6 +390,10 @@ define([
 
             Cartesian3.clone(position, scratchPrevPosition);
             Cartesian3.clone(positions[j], scratchPosition);
+
+            if (j !== 0) {
+                arcLength += Cartesian3.distance(scratchPosition, scratchPrevPosition);
+            }
 
             if (j === positionsLength - 1) {
                 position = scratchCartesian3;
@@ -427,7 +432,7 @@ define([
                 expandAndWidth[expandAndWidthIndex++] = direction * width;
 
                 if (vertexFormat.st) {
-                    st[stIndex++] = j / (positionsLength - 1);
+                    st[stIndex++] = arcLength; // j / (positionsLength - 1);
                     st[stIndex++] = Math.max(expandAndWidth[expandAndWidthIndex - 2], 0.0);
                 }
 
