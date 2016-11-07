@@ -432,7 +432,7 @@ define([
                 expandAndWidth[expandAndWidthIndex++] = direction * width;
 
                 if (vertexFormat.st) {
-                    st[stIndex++] = arcLength; // j / (positionsLength - 1);
+                    st[stIndex++] = arcLength / 1000000.0; // j / (positionsLength - 1);
                     st[stIndex++] = Math.max(expandAndWidth[expandAndWidthIndex - 2], 0.0);
                 }
 
