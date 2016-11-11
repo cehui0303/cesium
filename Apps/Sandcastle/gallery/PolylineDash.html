@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="Draw dashed polylines with various widths and materials.">
+    <meta name="cesium-sandcastle-labels" content="Geometries">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+    require.config({
+        baseUrl : '../../../Source',
+        waitSeconds : 60
+    });
+    </script>
+</head>
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+<style>
+    @import url(../templates/bucket.css);
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<div id="toolbar"></div>
+<script id="cesium_sandcastle_script">
+function startup(Cesium) {
+    'use strict';
+//Sandcastle_Begin
+var viewer = new Cesium.Viewer('cesiumContainer');
+
+var dashedLine = viewer.entities.add({
+    name : 'Dashed red line on the surface',
+    polyline : {
+        positions : Cesium.Cartesian3.fromDegreesArray([-75, 30,
+                                                        -125, 30]),
+        width : 5,
+        material : new Cesium.PolylineDashMaterialProperty({
+            duty : 0.5,
+            dashLength : 1.0,
+            color : Cesium.Color.RED
+        })
+    }
+});
+
+var redLine = viewer.entities.add({
+    name : 'Red polyline on the surface',
+    polyline : {
+        positions : Cesium.Cartesian3.fromDegreesArray([-75, 35,
+-125, 35,
+-125, 45,
+-100, 50
+]),
+        width : 5,
+        material : new Cesium.PolylineDashMaterialProperty({
+            duty : 0.5,
+            dashLength : 1.0,
+            color : Cesium.Color.RED
+        })
+    }
+});
+
+var diagonalLine = viewer.entities.add({
+    name : 'purple dashed line on the surface',
+    polyline : {
+        positions : Cesium.Cartesian3.fromDegreesArray([-75, 42, -90, 50]),
+        width : 5,
+        material : new Cesium.PolylineDashMaterialProperty({
+            duty : 1.0,
+            dashLength : 1.0,
+            dashPattern : 0xcffd,
+            color : Cesium.Color.PURPLE
+        })
+    }
+});
+
+viewer.zoomTo(viewer.entities);
+//Sandcastle_End
+Sandcastle.finishedLoading();
+}
+if (typeof Cesium !== "undefined") {
+    startup(Cesium);
+} else if (typeof require === "function") {
+    require(["Cesium"], startup);
+}
+</script>
+</body>
+</html>
