@@ -20,6 +20,7 @@ define([
     var defaultColor = Color.WHITE;
     var defaultDuty = 0.25;
     var defaultDashLength = 500000.0;
+    var defaultDashPattern = 65535;
 
     /**
      * A {@link MaterialProperty} that maps to polyline dash {@link Material} uniforms.
@@ -30,6 +31,7 @@ define([
      * @param {Property} [options.color=Color.WHITE] A Property specifying the {@link Color} of the line.
      * @param {Property} [options.duty=0.25] A numeric Property specifying the fractional length of a dash, as a percentage of the length of a cycle.
      * @param {Property} [options.dashLength=500000.0] A numeric Property specifying the actual length of a dash cycle.
+     * @param {Property} [options.dashPattern=65535.0] A numeric Property specifying a pattern for the dash
      */
     function PolylineDashMaterialProperty(options) {
         options = defaultValue(options, defaultValue.EMPTY_OBJECT);
@@ -41,10 +43,13 @@ define([
         this._dutySubscription = undefined;
         this._dashLength = undefined;
         this._dashLengthSubscription = undefined;
+        this._dashPattern = undefined;
+        this._dashPatternSubscription = undefined;
 
         this.color = options.color;
         this.duty = options.duty;
         this.dashLength = options.dashLength;
+        this.dashPattern = options.dashPattern;
     }
 
     defineProperties(PolylineDashMaterialProperty.prototype, {
@@ -58,7 +63,7 @@ define([
         isConstant : {
             get : function() {
                 return (Property.isConstant(this._color) && Property.isConstant(this._duty)
-                        && Property.isConstant(this._dashLength));
+                        && Property.isConstant(this._dashLength) && Property.isConstant(this._dashPattern));
             }
         },
         /**
@@ -91,7 +96,14 @@ define([
          * @memberof PolylineDashMaterialProperty.prototype
          * @type {Property}
          */
-        dashLength : createPropertyDescriptor('dashLength')
+        dashLength : createPropertyDescriptor('dashLength'),
+        /**
+         * Gets or sets the numeric Property specifying a dash pattern
+         * @memberof PolylineDashMaterialProperty.prototype
+         * @type {Property}
+         */
+        dashPattern : createPropertyDescriptor('dashPattern')
+
     });
 
     /**
@@ -118,6 +130,7 @@ define([
         result.color = Property.getValueOrClonedDefault(this._color, time, defaultColor, result.color);
         result.duty = Property.getValueOrDefault(this._duty, time, defaultDuty, result.duty);
         result.dashLength = Property.getValueOrDefault(this._dashLength, time, defaultDashLength, result.duty);
+        result.dashPattern = Property.getValueOrDefault(this._dashPattern, time, defaultDashPattern, result.duty);
         return result;
     };
 
@@ -133,7 +146,8 @@ define([
                (other instanceof PolylineDashMaterialProperty && //
                 Property.equals(this._color, other._color) &&
                 Property.equals(this._duty, other._duty) &&
-                Property.equals(this._dashLength, other._dashLength));
+                Property.equals(this._dashLength, other._dashLength) &&
+               Property.equals(this._dashPattern, other._dashPattern));
     };
 
     return PolylineDashMaterialProperty;
