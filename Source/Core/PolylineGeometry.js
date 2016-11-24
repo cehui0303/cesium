@@ -370,11 +370,13 @@ define([
         var nextPositions = new Float64Array(size * 3);
         var expandAndWidth = new Float32Array(size * 2);
         var st = vertexFormat.st ? new Float32Array(size * 2) : undefined;
+        var arcLengths = new Float32Array(size);
         var finalColors = defined(colors) ? new Uint8Array(size * 4) : undefined;
 
         var positionIndex = 0;
         var expandAndWidthIndex = 0;
         var stIndex = 0;
+        var arcLengthIndex = 0;
         var colorIndex = 0;
         var position;
         var arcLength = 0.0;
@@ -432,9 +434,12 @@ define([
                 expandAndWidth[expandAndWidthIndex++] = direction * width;
 
                 if (vertexFormat.st) {
-                    st[stIndex++] = arcLength / 1000000.0; // j / (positionsLength - 1);
+                    st[stIndex++] = j / (positionsLength - 1);
                     st[stIndex++] = Math.max(expandAndWidth[expandAndWidthIndex - 2], 0.0);
                 }
+
+                arcLengths[arcLengthIndex++] = arcLength / 1000000.0;
+
 
                 if (defined(finalColors)) {
                     var color = (k < 2) ? color0 : color1;
@@ -471,6 +476,12 @@ define([
             componentDatatype : ComponentDatatype.FLOAT,
             componentsPerAttribute : 2,
             values : expandAndWidth
+        });
+
+        attributes.arcLength = new GeometryAttribute({
+            componentDatatype : ComponentDatatype.FLOAT,
+            componentsPerAttribute : 1,
+            values : arcLengths
         });
 
         if (vertexFormat.st) {
