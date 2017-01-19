@@ -1182,6 +1182,7 @@ define([
             var segmentIndex = 0;
             var count = 0;
             var position;
+            var arcLength = 0;
 
             for ( var j = 0; j < positionsLength; ++j) {
                 if (j === 0) {
@@ -1242,6 +1243,10 @@ define([
                     }
                 }
 
+                if (j !== 0) {
+                    arcLength += Cartesian3.distance(scratchWritePosition, scratchWritePrevPosition);
+                }
+
                 var startK = (segmentStart) ? 2 : 0;
                 var endK = (segmentEnd) ? 2 : 4;
 
@@ -1253,7 +1258,7 @@ define([
                     var direction = (k - 2 < 0) ? -1.0 : 1.0;
                     texCoordExpandAndBatchIndexArray[texCoordExpandAndBatchIndexIndex] = j / (positionsLength - 1); // s tex coord
                     texCoordExpandAndBatchIndexArray[texCoordExpandAndBatchIndexIndex + 1] = 2 * (k % 2) - 1;       // expand direction
-                    texCoordExpandAndBatchIndexArray[texCoordExpandAndBatchIndexIndex + 2] = direction;
+                    texCoordExpandAndBatchIndexArray[texCoordExpandAndBatchIndexIndex + 2] = direction * ((arcLength / 100000.0) + 1);
                     texCoordExpandAndBatchIndexArray[texCoordExpandAndBatchIndexIndex + 3] = polylineBatchIndex;
 
                     positionIndex += 6 * 3;
