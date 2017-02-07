@@ -322,7 +322,7 @@ define([
      *
      * @example
      * geometry = Cesium.GeometryPipeline.reorderForPreVertexCache(geometry);
-     * 
+     *
      * @see GeometryPipeline.reorderForPostVertexCache
      */
     GeometryPipeline.reorderForPreVertexCache = function(geometry) {
@@ -409,7 +409,7 @@ define([
      *
      * @example
      * geometry = Cesium.GeometryPipeline.reorderForPostVertexCache(geometry);
-     * 
+     *
      * @see GeometryPipeline.reorderForPreVertexCache
      * @see {@link http://gfx.cs.princ0eton.edu/pubs/Sander_2007_%3ETR/tipsy.pdf|Fast Triangle Reordering for Vertex Locality and Reduced Overdraw}
      * by Sander, Nehab, and Barczak
@@ -1000,7 +1000,7 @@ define([
      * <p>
      * This is used by {@link Primitive} to efficiently render a large amount of static data.
      * </p>
-     * 
+     *
      * @private
      *
      * @param {GeometryInstance[]} [instances] The array of {@link GeometryInstance} objects whose geometry will be combined.
@@ -1016,7 +1016,7 @@ define([
      *   Cesium.GeometryPipeline.transformToWorldCoordinates(instances[i]);
      * }
      * var geometries = Cesium.GeometryPipeline.combineInstances(instances);
-     * 
+     *
      * @see GeometryPipeline.transformToWorldCoordinates
      */
     GeometryPipeline.combineInstances = function(instances) {
@@ -2229,6 +2229,7 @@ define([
         var prevPositions = attributes.prevPosition.values;
         var nextPositions = attributes.nextPosition.values;
         var expandAndWidths = attributes.expandAndWidth.values;
+        var arcLengths = attributes.arcLength.values;
 
         var texCoords = (defined(attributes.st)) ? attributes.st.values : undefined;
         var colors = (defined(attributes.color)) ? attributes.color.values : undefined;
@@ -2334,6 +2335,11 @@ define([
                 p2Attributes.expandAndWidth.values.push(-1,  width, 1,  width);
                 p2Attributes.expandAndWidth.values.push(-1, -width, 1, -width);
 
+                p0Attributes.arcLength.values.push(arcLengths[i0], arcLengths[i0]);
+                p0Attributes.arcLength.values.push(arcLengths[i0], arcLengths[i0]);
+                p2Attributes.arcLength.values.push(arcLengths[i2], arcLengths[i2]);
+                p2Attributes.arcLength.values.push(arcLengths[i2], arcLengths[i2]);
+
                 var t = Cartesian3.magnitudeSquared(Cartesian3.subtract(intersection, p0, cartesian3Scratch3));
                 t /= Cartesian3.magnitudeSquared(Cartesian3.subtract(p2, p0, cartesian3Scratch3));
 
@@ -2411,6 +2417,11 @@ define([
                         currentAttributes.st.values.push(texCoords[j]);
                     }
                 }
+
+                for (j = i; j < i + 4; ++j) {
+                    currentAttributes.arcLength.values.push(arcLengths[j]);
+                }
+
 
                 if (defined(colors)) {
                     for (j = i * 4; j < i * 4 + 4 * 4; ++j) {
