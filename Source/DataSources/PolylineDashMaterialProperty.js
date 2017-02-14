@@ -18,7 +18,7 @@ define([
     'use strict';
 
     var defaultColor = Color.WHITE;
-    var defaultDuty = 0.25;
+    var defaultDuty = 0.5;
     var defaultDashLength = 500000.0;
     var defaultDashPattern = 65535;
 
