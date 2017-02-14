@@ -585,7 +585,7 @@ function updateModels() {
 }
 
 function createModel(url, origin) {
-    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, 0.0, 0.0, 0.0);
+    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
 
     var model = scene.primitives.add(Cesium.Model.fromGltf({
         url : url,
@@ -606,7 +606,7 @@ function createModel(url, origin) {
 }
 
 function createBoxRTC(origin) {
-    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, 0.0, 0.0, 0.0);
+    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
 
     var boxGeometry = Cesium.BoxGeometry.createGeometry(Cesium.BoxGeometry.fromDimensions({
         vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
@@ -645,7 +645,7 @@ function createBoxRTC(origin) {
 }
 
 function createBox(origin) {
-    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, 0.0, 0.0, 0.0);
+    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
 
     var box = new Cesium.Primitive({
         geometryInstances : new Cesium.GeometryInstance({
@@ -670,7 +670,7 @@ function createBox(origin) {
 }
 
 function createSphere(origin) {
-    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, 0.0, 0.0, 0.0);
+    var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(origin, new Cesium.HeadingPitchRoll());
 
     var sphere = new Cesium.Primitive({
         geometryInstances : new Cesium.GeometryInstance({
@@ -703,7 +703,7 @@ canvas.onclick = function() {
 
 var handler = new Cesium.ScreenSpaceEventHandler(canvas);
 
-// Double click object to turn castShadows on/off
+// Click object to turn castShadows on/off
 handler.setInputAction(function(movement) {
     var picked = scene.pick(movement.position);
     if (Cesium.defined(picked) && Cesium.defined(picked.primitive)) {
@@ -711,9 +711,9 @@ handler.setInputAction(function(movement) {
         var receiveShadows = Cesium.ShadowMode.receiveShadows(picked.primitive.shadows);
         picked.primitive.shadows = Cesium.ShadowMode.fromCastReceive(!castShadows, receiveShadows);
     }
-}, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-// Double middle click object to turn receiveShadows on/off
+// Middle click object to turn receiveShadows on/off
 handler.setInputAction(function(movement) {
     var picked = scene.pick(movement.position);
     if (Cesium.defined(picked)) {
@@ -721,7 +721,7 @@ handler.setInputAction(function(movement) {
         var receiveShadows = Cesium.ShadowMode.receiveShadows(picked.primitive.shadows);
         picked.primitive.shadows = Cesium.ShadowMode.fromCastReceive(castShadows, !receiveShadows);
     }
-}, Cesium.ScreenSpaceEventType.MIDDLE_DOUBLE_CLICK);
+}, Cesium.ScreenSpaceEventType.MIDDLE_CLICK);
 
 //Sandcastle_End
 Sandcastle.finishedLoading();

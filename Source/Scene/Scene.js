@@ -35,12 +35,14 @@ define([
         '../Renderer/Context',
         '../Renderer/ContextLimits',
         '../Renderer/DrawCommand',
+        '../Renderer/Pass',
         '../Renderer/PassState',
         '../Renderer/ShaderProgram',
         '../Renderer/ShaderSource',
         './Camera',
         './CreditDisplay',
         './CullingVolume',
+        './DebugCameraPrimitive',
         './DepthPlane',
         './DeviceOrientationCameraController',
         './Fog',
@@ -51,7 +53,6 @@ define([
         './MapMode2D',
         './OIT',
         './OrthographicFrustum',
-        './Pass',
         './PerformanceDisplay',
         './PerInstanceColorAppearance',
         './PerspectiveFrustum',
@@ -102,12 +103,14 @@ define([
         Context,
         ContextLimits,
         DrawCommand,
+        Pass,
         PassState,
         ShaderProgram,
         ShaderSource,
         Camera,
         CreditDisplay,
         CullingVolume,
+        DebugCameraPrimitive,
         DepthPlane,
         DeviceOrientationCameraController,
         Fog,
@@ -118,7 +121,6 @@ define([
         MapMode2D,
         OIT,
         OrthographicFrustum,
-        Pass,
         PerformanceDisplay,
         PerInstanceColorAppearance,
         PerspectiveFrustum,
@@ -220,7 +222,7 @@ define([
             creditContainer = document.createElement('div');
             creditContainer.style.position = 'absolute';
             creditContainer.style.bottom = '0';
-            creditContainer.style['text-shadow'] = '0px 0px 2px #000000';
+            creditContainer.style['text-shadow'] = '0 0 2px #000000';
             creditContainer.style.color = '#ffffff';
             creditContainer.style['font-size'] = '10px';
             creditContainer.style['padding-right'] = '5px';
@@ -284,6 +286,9 @@ define([
         this._depthClearCommand = new ClearCommand({
             depth : 1.0,
             owner : this
+        });
+        this._stencilClearCommand = new ClearCommand({
+            stencil : 0
         });
 
         this._pickDepths = [];
@@ -388,8 +393,6 @@ define([
         this._mode = SceneMode.SCENE3D;
 
         this._mapProjection = defined(options.mapProjection) ? options.mapProjection : new GeographicProjection();
-
-        this._transitioner = new SceneTransitioner(this, this._mapProjection.ellipsoid);
 
         /**
          * The current morph transition time between 2D/Columbus View and 3D,
@@ -513,6 +516,20 @@ define([
          * @default 1
          */
         this.debugShowDepthFrustum = 1;
+
+        /**
+         * This property is for debugging only; it is not for production use.
+         * <p>
+         * When <code>true</code>, draws outlines to show the boundaries of the camera frustums
+         * </p>
+         *
+         * @type Boolean
+         *
+         * @default false
+         */
+        this.debugShowFrustumPlanes = false;
+        this._debugShowFrustumPlanes = false;
+        this._debugFrustumPlanes = undefined;
 
         /**
          * When <code>true</code>, enables Fast Approximate Anti-aliasing even when order independent translucency
@@ -1077,8 +1094,36 @@ define([
             get : function() {
                 return this._mapMode2D;
             }
+        },
+
+         /**
+         * Gets or sets the position of the Imagery splitter within the viewport.  Valid values are between 0.0 and 1.0.
+         * @memberof Scene.prototype
+         *
+         * @type {Number}
+         */
+        imagerySplitPosition : {
+            get: function() {
+                return this._frameState.imagerySplitPosition;
+            },
+
+            set: function(value) {
+                this._frameState.imagerySplitPosition = value;
+            }
         }
     });
+
+    /**
+     * Determines if a compressed texture format is supported.
+     * @param {String} format The texture format. May be the name of the format or the WebGL extension name, e.g. s3tc or WEBGL_compressed_texture_s3tc.
+     * @return {boolean} Whether or not the format is supported.
+     */
+    Scene.prototype.getCompressedTextureFormatSupported = function(format) {
+        var context = this.context;
+        return ((format === 'WEBGL_compressed_texture_s3tc' || format === 's3tc') && context.s3tc) ||
+               ((format === 'WEBGL_compressed_texture_pvrtc' || format === 'pvrtc') && context.pvrtc) ||
+               ((format === 'WEBGL_compressed_texture_etc1' || format === 'etc1') && context.etc1);
+    };
 
     var scratchPosition0 = new Cartesian3();
     var scratchPosition1 = new Cartesian3();
@@ -1108,15 +1153,13 @@ define([
         var lightShadowMaps = frameState.shadowHints.lightShadowMaps;
         var lightShadowsEnabled = shadowsEnabled && (lightShadowMaps.length > 0);
 
+        // Update derived commands when any shadow maps become dirty
         var shadowsDirty = false;
-        if (shadowsEnabled && (command.receiveShadows || command.castShadows)) {
-            // Update derived commands when any shadow maps become dirty
-            var lastDirtyTime = frameState.shadowHints.lastDirtyTime;
-            if (command.lastDirtyTime !== lastDirtyTime) {
-                command.lastDirtyTime = lastDirtyTime;
-                command.dirty = true;
-                shadowsDirty = true;
-            }
+        var lastDirtyTime = frameState.shadowHints.lastDirtyTime;
+        if (command.lastDirtyTime !== lastDirtyTime) {
+            command.lastDirtyTime = lastDirtyTime;
+            command.dirty = true;
+            shadowsDirty = true;
         }
 
         if (command.dirty) {
@@ -1131,7 +1174,8 @@ define([
             var oit = scene._oit;
             if (command.pass === Pass.TRANSLUCENT && defined(oit) && oit.isSupported()) {
                 if (lightShadowsEnabled && command.receiveShadows) {
-                    derivedCommands.oit = oit.createDerivedCommands(command.derivedCommands.shadows.receiveCommand, context, derivedCommands.oit);
+                    derivedCommands.oit = defined(derivedCommands.oit) ? derivedCommands.oit : {};
+                    derivedCommands.oit.shadows = oit.createDerivedCommands(command.derivedCommands.shadows.receiveCommand, context, derivedCommands.oit.shadows);
                 } else {
                     derivedCommands.oit = oit.createDerivedCommands(command, context, derivedCommands.oit);
                 }
@@ -1176,6 +1220,11 @@ define([
         frameState.cullingVolume = camera.frustum.computeCullingVolume(camera.positionWC, camera.directionWC, camera.upWC);
         frameState.occluder = getOccluder(scene);
         frameState.terrainExaggeration = scene._terrainExaggeration;
+        if (defined(scene.globe)) {
+            frameState.maximumScreenSpaceError = scene.globe.maximumScreenSpaceError;
+        } else {
+            frameState.maximumScreenSpaceError = 2;
+        }
 
         clearPasses(frameState.passes);
     }
@@ -1405,9 +1454,18 @@ define([
         }
 
         if (near !== Number.MAX_VALUE && (numFrustums !== numberOfFrustums || (frustumCommandsList.length !== 0 &&
-                (near < frustumCommandsList[0].near || far > frustumCommandsList[numberOfFrustums - 1].far)))) {
+                (near < frustumCommandsList[0].near || (far > frustumCommandsList[numberOfFrustums - 1].far && !CesiumMath.equalsEpsilon(far, frustumCommandsList[numberOfFrustums - 1].far, CesiumMath.EPSILON8)))))) {
             updateFrustums(near, far, farToNearRatio, numFrustums, frustumCommandsList, is2D, scene.nearToFarDistance2D);
             createPotentiallyVisibleSet(scene);
+        }
+
+        var frustumSplits = frameState.frustumSplits;
+        frustumSplits.length = numFrustums + 1;
+        for (var j = 0; j < numFrustums; ++j) {
+            frustumSplits[j] = frustumCommandsList[j].near;
+            if (j === numFrustums - 1) {
+                frustumSplits[j + 1] = frustumCommandsList[j].far;
+            }
         }
     }
 
@@ -1428,22 +1486,38 @@ define([
         var sp = defaultValue(shaderProgram, command.shaderProgram);
         var fs = sp.fragmentShaderSource.clone();
 
+        var targets = [];
         fs.sources = fs.sources.map(function(source) {
             source = ShaderSource.replaceMain(source, 'czm_Debug_main');
+            var re = /gl_FragData\[(\d+)\]/g;
+            var match;
+            while ((match = re.exec(source)) !== null) {
+                if (targets.indexOf(match[1]) === -1) {
+                    targets.push(match[1]);
+                }
+            }
             return source;
         });
+        var length = targets.length;
 
         var newMain =
             'void main() \n' +
             '{ \n' +
             '    czm_Debug_main(); \n';
 
+        var i;
         if (scene.debugShowCommands) {
             if (!defined(command._debugColor)) {
                 command._debugColor = Color.fromRandom();
             }
             var c = command._debugColor;
-            newMain += '    gl_FragColor.rgb *= vec3(' + c.red + ', ' + c.green + ', ' + c.blue + '); \n';
+            if (length > 0) {
+                for (i = 0; i < length; ++i) {
+                    newMain += '    gl_FragData[' + targets[i] + '].rgb *= vec3(' + c.red + ', ' + c.green + ', ' + c.blue + '); \n';
+                }
+            } else {
+                newMain += '    ' + 'gl_FragColor' + '.rgb *= vec3(' + c.red + ', ' + c.green + ', ' + c.blue + '); \n';
+            }
         }
 
         if (scene.debugShowFrustums) {
@@ -1452,7 +1526,13 @@ define([
             var r = (command.debugOverlappingFrustums & (1 << 0)) ? '1.0' : '0.0';
             var g = (command.debugOverlappingFrustums & (1 << 1)) ? '1.0' : '0.0';
             var b = (command.debugOverlappingFrustums & (1 << 2)) ? '1.0' : '0.0';
-            newMain += '    gl_FragColor.rgb *= vec3(' + r + ', ' + g + ', ' + b + '); \n';
+            if (length > 0) {
+                for (i = 0; i < length; ++i) {
+                    newMain += '    gl_FragData[' + targets[i] + '].rgb *= vec3(' + r + ', ' + g + ', ' + b + '); \n';
+                }
+            } else {
+                newMain += '    ' + 'gl_FragColor' + '.rgb *= vec3(' + r + ', ' + g + ', ' + b + '); \n';
+            }
         }
 
         newMain += '}';
@@ -1624,7 +1704,7 @@ define([
     var scratchPerspectiveOffCenterFrustum = new PerspectiveOffCenterFrustum();
     var scratchOrthographicFrustum = new OrthographicFrustum();
 
-    function executeCommands(scene, passState) {
+    function executeCommands(scene, passState, picking) {
         var camera = scene._camera;
         var context = scene.context;
         var us = context.uniformState;
@@ -1648,37 +1728,40 @@ define([
         us.updateFrustum(frustum);
         us.updatePass(Pass.ENVIRONMENT);
 
-        var environmentState = scene._environmentState;
-        var skyBoxCommand = environmentState.skyBoxCommand;
-        if (defined(skyBoxCommand)) {
-            executeCommand(skyBoxCommand, scene, context, passState);
-        }
-
-        if (environmentState.isSkyAtmosphereVisible) {
-            executeCommand(environmentState.skyAtmosphereCommand, scene, context, passState);
-        }
-
         var useWebVR = scene._useWebVR && scene.mode !== SceneMode.SCENE2D;
+        var environmentState = scene._environmentState;
 
-        if (environmentState.isSunVisible) {
-            environmentState.sunDrawCommand.execute(context, passState);
-            if (scene.sunBloom && !useWebVR) {
-                var framebuffer;
-                if (environmentState.useGlobeDepthFramebuffer) {
-                    framebuffer = scene._globeDepth.framebuffer;
-                } else if (environmentState.useFXAA) {
-                    framebuffer = scene._fxaa.getColorFramebuffer();
-                } else {
-                    framebuffer = environmentState.originalFramebuffer;
-                }
-                scene._sunPostProcess.execute(context, framebuffer);
-                passState.framebuffer = framebuffer;
+        // Do not render environment primitives during a pick pass since they do not generate picking commands.
+        if (!picking) {
+            var skyBoxCommand = environmentState.skyBoxCommand;
+            if (defined(skyBoxCommand)) {
+                executeCommand(skyBoxCommand, scene, context, passState);
             }
-        }
 
-        // Moon can be seen through the atmosphere, since the sun is rendered after the atmosphere.
-        if (environmentState.isMoonVisible) {
-            environmentState.moonCommand.execute(context, passState);
+            if (environmentState.isSkyAtmosphereVisible) {
+                executeCommand(environmentState.skyAtmosphereCommand, scene, context, passState);
+            }
+
+            if (environmentState.isSunVisible) {
+                environmentState.sunDrawCommand.execute(context, passState);
+                if (scene.sunBloom && !useWebVR) {
+                    var framebuffer;
+                    if (environmentState.useGlobeDepthFramebuffer) {
+                        framebuffer = scene._globeDepth.framebuffer;
+                    } else if (environmentState.useFXAA) {
+                        framebuffer = scene._fxaa.getColorFramebuffer();
+                    } else {
+                        framebuffer = environmentState.originalFramebuffer;
+                    }
+                    scene._sunPostProcess.execute(context, framebuffer);
+                    passState.framebuffer = framebuffer;
+                }
+            }
+
+            // Moon can be seen through the atmosphere, since the sun is rendered after the atmosphere.
+            if (environmentState.isMoonVisible) {
+                environmentState.moonCommand.execute(context, passState);
+            }
         }
 
         // Determine how translucent surfaces will be handled.
@@ -1756,6 +1839,11 @@ define([
             length = frustumCommands.indices[Pass.GROUND];
             for (j = 0; j < length; ++j) {
                 executeCommand(commands[j], scene, context, passState);
+            }
+
+            // Clear the stencil after the ground pass
+            if (length > 0 && context.stencilBuffer) {
+                scene._stencilClearCommand.execute(context, passState);
             }
 
             if (clearGlobeDepth) {
@@ -1949,14 +2037,14 @@ define([
             Cartesian3.add(savedCamera.position, eyeTranslation, camera.position);
             camera.frustum.xOffset = offset;
 
-            executeCommands(scene, passState);
+            executeCommands(scene, passState, picking);
 
             viewport.x = passState.viewport.width;
 
             Cartesian3.subtract(savedCamera.position, eyeTranslation, camera.position);
             camera.frustum.xOffset = -offset;
 
-            executeCommands(scene, passState);
+            executeCommands(scene, passState, picking);
 
             Camera.clone(savedCamera, camera);
         } else {
@@ -2107,7 +2195,7 @@ define([
             executeShadowMapCastCommands(scene);
         }
 
-        executeCommands(scene, passState);
+        executeCommands(scene, passState, picking);
     }
 
     function updateEnvironment(scene) {
@@ -2139,13 +2227,38 @@ define([
         }
     }
 
+    function updateDebugFrustumPlanes(scene) {
+        var frameState = scene._frameState;
+        if (scene.debugShowFrustumPlanes !== scene._debugShowFrustumPlanes) {
+            if (scene.debugShowFrustumPlanes) {
+                scene._debugFrustumPlanes = new DebugCameraPrimitive({
+                    camera: scene.camera,
+                    updateOnChange: false
+                });
+            } else {
+                scene._debugFrustumPlanes = scene._debugFrustumPlanes && scene._debugFrustumPlanes.destroy();
+            }
+            scene._debugShowFrustumPlanes = scene.debugShowFrustumPlanes;
+        }
+
+        if (defined(scene._debugFrustumPlanes)) {
+            scene._debugFrustumPlanes.update(frameState);
+        }
+    }
+
     function updateShadowMaps(scene) {
         var frameState = scene._frameState;
         var shadowMaps = frameState.shadowMaps;
         var length = shadowMaps.length;
 
-        frameState.shadowHints.shadowsEnabled = (length > 0) && !frameState.passes.pick && (scene.mode === SceneMode.SCENE3D);
-        if (!frameState.shadowHints.shadowsEnabled) {
+        var shadowsEnabled = (length > 0) && !frameState.passes.pick && (scene.mode === SceneMode.SCENE3D);
+        if (shadowsEnabled !== frameState.shadowHints.shadowsEnabled) {
+            // Update derived commands when shadowsEnabled changes
+            ++frameState.shadowHints.lastDirtyTime;
+            frameState.shadowHints.shadowsEnabled = shadowsEnabled;
+        }
+
+        if (!shadowsEnabled) {
             return;
         }
 
@@ -2184,6 +2297,7 @@ define([
         scene._groundPrimitives.update(frameState);
         scene._primitives.update(frameState);
 
+        updateDebugFrustumPlanes(scene);
         updateShadowMaps(scene);
 
         if (scene._globe) {
@@ -2330,7 +2444,7 @@ define([
         if (defined(this._deviceOrientationCameraController)) {
             this._deviceOrientationCameraController.update();
         }
-        
+
         this._camera.update(this._mode);
         this._camera._updateCameraChanged();
     };
@@ -2583,7 +2697,7 @@ define([
     };
 
     var scratchPackedDepth = new Cartesian4();
-    var packedDepthScale = new Cartesian4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 160581375.0);
+    var packedDepthScale = new Cartesian4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0);
 
     /**
      * Returns the cartesian position reconstructed from the depth buffer and window position.
@@ -2839,6 +2953,7 @@ define([
         this._sunPostProcess = this._sunPostProcess && this._sunPostProcess.destroy();
         this._depthPlane = this._depthPlane && this._depthPlane.destroy();
         this._transitioner.destroy();
+        this._debugFrustumPlanes = this._debugFrustumPlanes && this._debugFrustumPlanes.destroy();
 
         if (defined(this._globeDepth)) {
             this._globeDepth.destroy();

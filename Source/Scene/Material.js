@@ -11,7 +11,9 @@ define([
         '../Core/destroyObject',
         '../Core/DeveloperError',
         '../Core/isArray',
+        '../Core/loadCRN',
         '../Core/loadImage',
+        '../Core/loadKTX',
         '../Core/Matrix2',
         '../Core/Matrix3',
         '../Core/Matrix4',
@@ -43,7 +45,9 @@ define([
         destroyObject,
         DeveloperError,
         isArray,
+        loadCRN,
         loadImage,
+        loadKTX,
         Matrix2,
         Matrix3,
         Matrix4,
@@ -415,10 +419,23 @@ define([
             uniformId = loadedImage.id;
             var image = loadedImage.image;
 
-            var texture = new Texture({
-                context : context,
-                source : image
-            });
+            var texture;
+            if (defined(image.internalFormat)) {
+                texture = new Texture({
+                    context : context,
+                    pixelFormat : image.internalFormat,
+                    width : image.width,
+                    height : image.height,
+                    source : {
+                        arrayBufferView : image.bufferView
+                    }
+                });
+            } else {
+                texture = new Texture({
+                    context : context,
+                    source : image
+                });
+            }
 
             this._textures[uniformId] = texture;
 
@@ -592,17 +609,21 @@ define([
     }
 
     function invalidNameError(property, properties) {
+        //>>includeStart('debug', pragmas.debug);
         var errorString = 'fabric: property name \'' + property + '\' is not valid. It should be ';
         for ( var i = 0; i < properties.length; i++) {
             var propertyName = '\'' + properties[i] + '\'';
             errorString += (i === properties.length - 1) ? ('or ' + propertyName + '.') : (propertyName + ', ');
         }
         throw new DeveloperError(errorString);
+        //>>includeEnd('debug');
     }
 
     function duplicateNameError(property, properties) {
+        //>>includeStart('debug', pragmas.debug);
         var errorString = 'fabric: uniforms and materials cannot share the same property \'' + property + '\'';
         throw new DeveloperError(errorString);
+        //>>includeEnd('debug');
     }
 
     var templateProperties = ['type', 'materials', 'uniforms', 'components', 'source'];
@@ -615,9 +636,11 @@ define([
         var components = template.components;
 
         // Make sure source and components do not exist in the same template.
+        //>>includeStart('debug', pragmas.debug);
         if (defined(components) && defined(template.source)) {
             throw new DeveloperError('fabric: cannot have source and components in the same template.');
         }
+        //>>includeEnd('debug');
 
         // Make sure all template and components properties are valid.
         checkForValidProperties(template, templateProperties, invalidNameError, true);
@@ -658,6 +681,9 @@ define([
         'mat3' : Matrix3,
         'mat4' : Matrix4
     };
+
+    var ktxRegex = /\.ktx$/i;
+    var crnRegex = /\.crn$/i;
 
     function createTexture2DUpdateFunction(uniformId) {
         var oldUniformValue;
@@ -737,7 +763,15 @@ define([
 
             if (uniformValue !== material._texturePaths[uniformId]) {
                 if (typeof uniformValue === 'string') {
-                    when(loadImage(uniformValue), function(image) {
+                    var promise;
+                    if (ktxRegex.test(uniformValue)) {
+                        promise = loadKTX(uniformValue);
+                    } else if (crnRegex.test(uniformValue)) {
+                        promise = loadCRN(uniformValue);
+                    } else {
+                        promise = loadImage(uniformValue);
+                    }
+                    when(promise, function(image) {
                         material._loadedImages.push({
                             id : uniformId,
                             image : image
@@ -822,12 +856,20 @@ define([
         var uniformValue = materialUniforms[uniformId];
         var uniformType = getUniformType(uniformValue);
 
+        //>>includeStart('debug', pragmas.debug);
         if (!defined(uniformType)) {
             throw new DeveloperError('fabric: uniform \'' + uniformId + '\' has invalid type.');
-        } else if (uniformType === 'channels') {
-            if (replaceToken(material, uniformId, uniformValue, false) === 0 && strict) {
+        }
+        //>>includeEnd('debug');
+
+        var replacedTokenCount;
+        if (uniformType === 'channels') {
+            replacedTokenCount = replaceToken(material, uniformId, uniformValue, false);
+            //>>includeStart('debug', pragmas.debug);
+            if (replacedTokenCount === 0 && strict) {
                 throw new DeveloperError('strict: shader source does not use channels \'' + uniformId + '\'.');
             }
+            //>>includeEnd('debug');
         } else {
             // Since webgl doesn't allow texture dimension queries in glsl, create a uniform to do it.
             // Check if the shader source actually uses texture dimensions before creating the uniform.
@@ -851,9 +893,13 @@ define([
             }
 
             var newUniformId = uniformId + '_' + material._count++;
-            if (replaceToken(material, uniformId, newUniformId) === 1 && strict) {
+            replacedTokenCount = replaceToken(material, uniformId, newUniformId);
+            //>>includeStart('debug', pragmas.debug);
+            if (replacedTokenCount === 1 && strict) {
                 throw new DeveloperError('strict: shader source does not use uniform \'' + uniformId + '\'.');
             }
+            //>>includeEnd('debug');
+
             // Set uniform value
             material.uniforms[uniformId] = uniformValue;
 
@@ -946,9 +992,12 @@ define([
 
                 // Replace each material id with an czm_getMaterial method call.
                 var materialMethodCall = newMethodName + '(materialInput)';
-                if (replaceToken(material, subMaterialId, materialMethodCall) === 0 && strict) {
+                var tokensReplacedCount = replaceToken(material, subMaterialId, materialMethodCall);
+                //>>includeStart('debug', pragmas.debug);
+                if (tokensReplacedCount === 0 && strict) {
                     throw new DeveloperError('strict: shader source does not use material \'' + subMaterialId + '\'.');
                 }
+                //>>includeEnd('debug');
             }
         }
     }
@@ -1334,7 +1383,7 @@ define([
         },
         translucent : function(material) {
             var uniforms = material.uniforms;
-            return (uniforms.fadeInColor.alpha < 1.0) || (uniforms.fadeOutColor.alpha < 0.0);
+            return (uniforms.fadeInColor.alpha < 1.0) || (uniforms.fadeOutColor.alpha < 1.0);
         }
     });
 

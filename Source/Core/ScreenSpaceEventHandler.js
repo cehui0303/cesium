@@ -4,6 +4,7 @@ define([
         './Cartesian2',
         './defaultValue',
         './defined',
+        './deprecationWarning',
         './destroyObject',
         './DeveloperError',
         './FeatureDetection',
@@ -15,6 +16,7 @@ define([
         Cartesian2,
         defaultValue,
         defined,
+        deprecationWarning,
         destroyObject,
         DeveloperError,
         FeatureDetection,
@@ -86,6 +88,7 @@ define([
             registerListener(screenSpaceEventHandler, 'pointerdown', element, handlePointerDown);
             registerListener(screenSpaceEventHandler, 'pointerup', element, handlePointerUp);
             registerListener(screenSpaceEventHandler, 'pointermove', element, handlePointerMove);
+            registerListener(screenSpaceEventHandler, 'pointercancel', element, handlePointerUp);
         } else {
             registerListener(screenSpaceEventHandler, 'mousedown', element, handleMouseDown);
             registerListener(screenSpaceEventHandler, 'mouseup', alternateElement, handleMouseUp);
@@ -93,6 +96,7 @@ define([
             registerListener(screenSpaceEventHandler, 'touchstart', element, handleTouchStart);
             registerListener(screenSpaceEventHandler, 'touchend', alternateElement, handleTouchEnd);
             registerListener(screenSpaceEventHandler, 'touchmove', alternateElement, handleTouchMove);
+            registerListener(screenSpaceEventHandler, 'touchcancel', alternateElement, handleTouchEnd);
         }
 
         registerListener(screenSpaceEventHandler, 'dblclick', element, handleDblClick);
@@ -480,6 +484,10 @@ define([
                 Cartesian2.clone(positions.values[1], touch2StartEvent.position2);
 
                 action(touch2StartEvent);
+
+                // Touch-enabled devices, in particular iOS can have many default behaviours for
+                // "pinch" events, which can still be executed unless we prevent them here.
+                event.preventDefault();
             }
         }
     }
@@ -678,6 +686,14 @@ define([
         registerListeners(this);
     }
 
+    function checkForDoubleClick(type) {
+        if (type === ScreenSpaceEventType.MIDDLE_DOUBLE_CLICK) {
+            deprecationWarning('MIDDLE_DOUBLE_CLICK', 'ScreenSpaceEventType.MIDDLE_DOUBLE_CLICK was deprecated in Cesium 1.30.  It will be removed in 1.31.');
+        } else if (type === ScreenSpaceEventType.RIGHT_DOUBLE_CLICK) {
+            deprecationWarning('RIGHT_DOUBLE_CLICK', 'ScreenSpaceEventType.RIGHT_DOUBLE_CLICK was deprecated in Cesium 1.30.  It will be removed in 1.31.');
+        }
+    }
+
     /**
      * Set a function to be executed on an input event.
      *
@@ -698,6 +714,8 @@ define([
             throw new DeveloperError('type is required.');
         }
         //>>includeEnd('debug');
+
+        checkForDoubleClick(type);
 
         var key = getInputEventKey(type, modifier);
         this._inputEvents[key] = action;
@@ -720,6 +738,8 @@ define([
         }
         //>>includeEnd('debug');
 
+        checkForDoubleClick(type);
+
         var key = getInputEventKey(type, modifier);
         return this._inputEvents[key];
     };
@@ -740,6 +760,8 @@ define([
             throw new DeveloperError('type is required.');
         }
         //>>includeEnd('debug');
+
+        checkForDoubleClick(type);
 
         var key = getInputEventKey(type, modifier);
         delete this._inputEvents[key];
