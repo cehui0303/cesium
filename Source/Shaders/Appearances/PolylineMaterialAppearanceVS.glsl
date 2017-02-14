@@ -12,6 +12,7 @@ attribute float arcLength;
 varying float v_width;
 varying vec2 v_st;
 varying float v_arcLength;
+varying float v_metersPerPixel;
 
 void main()
 {
@@ -26,6 +27,9 @@ void main()
     v_width = width;
     v_st = st;
     v_arcLength = arcLength;
+
+    vec4 positionEC = (czm_modelViewRelativeToEye * p);      // position in eye coordinates
+    v_metersPerPixel = clamp(czm_metersPerPixel(positionEC), 100.0, 100000.0);
 
     vec4 positionWC = getPolylineWindowCoordinates(p, prev, next, expandDir, width, usePrev);
     gl_Position = czm_viewportOrthographic * positionWC;

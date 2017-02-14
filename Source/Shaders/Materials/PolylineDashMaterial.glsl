@@ -10,11 +10,16 @@ const float maskLength = 16.0;
 
 varying float v_arcLength;
 
+varying float v_metersPerPixel;
+
 czm_material czm_getMaterial(czm_materialInput materialInput)
 {
     czm_material material = czm_getDefaultMaterial(materialInput);
 
-    float omega = fract(v_arcLength / dashLength);
+    float metersPerPixel = v_metersPerPixel;
+    float dashLengthMeters = metersPerPixel * dashLength / 1000000.0;
+
+    float omega = fract(v_arcLength / dashLengthMeters);
     float dash = (1. - smoothstep(duty - .05, duty, omega));
     float maskIndex = floor(omega * maskLength);
     float maskTest = floor(dashPattern / pow(2.0, maskIndex));
@@ -22,6 +27,5 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
       dash = 0.0;
     material.emission = color.rgb;
     material.alpha = dash * color.a;
-
     return material;
 }
