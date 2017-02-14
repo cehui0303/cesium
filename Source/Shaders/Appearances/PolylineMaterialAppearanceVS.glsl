@@ -28,8 +28,11 @@ void main()
     v_st = st;
     v_arcLength = arcLength;
 
-    vec4 positionEC = (czm_modelViewRelativeToEye * p);      // position in eye coordinates
-    v_metersPerPixel = clamp(czm_metersPerPixel(positionEC), 100.0, 100000.0);
+    //vec4 positionEC = (czm_modelViewRelativeToEye * p);      // position in eye coordinates
+    //v_metersPerPixel = clamp(czm_metersPerPixel(positionEC), 100.0, 100000.0);
+
+    float fCameraHeight = length(czm_viewerPositionWC) - 6378137.0;
+    v_metersPerPixel = clamp(czm_metersPerPixel(vec4(0.0, 0.0, -fCameraHeight, 1.0)), 100.0, 100000.0);
 
     vec4 positionWC = getPolylineWindowCoordinates(p, prev, next, expandDir, width, usePrev);
     gl_Position = czm_viewportOrthographic * positionWC;
