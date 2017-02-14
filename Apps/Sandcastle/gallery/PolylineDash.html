@@ -34,10 +34,10 @@ var dashedLine = viewer.entities.add({
     polyline : {
         positions : Cesium.Cartesian3.fromDegreesArray([-75, 30,
                                                         -125, 30]),
-        width : 5,
+        width : 2,
         material : new Cesium.PolylineDashMaterialProperty({
             duty : 0.5,
-            dashLength : 5.0,
+            dashLength : 15.0,
             color : Cesium.Color.RED
         })
     }
@@ -51,10 +51,10 @@ var redLine = viewer.entities.add({
 -125, 45,
 -100, 50
 ]),
-        width : 5,
+        width : 2,
         material : new Cesium.PolylineDashMaterialProperty({
             duty : 0.5,
-            dashLength : 5.0,
+            dashLength : 15.0,
             color : Cesium.Color.RED
         })
     }
@@ -64,10 +64,10 @@ var diagonalLine = viewer.entities.add({
     name : 'purple dashed line on the surface',
     polyline : {
         positions : Cesium.Cartesian3.fromDegreesArray([-75, 42, -90, 50]),
-        width : 5,
+        width : 2,
         material : new Cesium.PolylineDashMaterialProperty({
             duty : 1.0,
-            dashLength : 5.0,
+            dashLength : 15.0,
             dashPattern : 0xcffd,
             color : Cesium.Color.PURPLE
         })
