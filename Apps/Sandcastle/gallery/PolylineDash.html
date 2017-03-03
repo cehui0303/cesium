@@ -74,6 +74,27 @@ var diagonalLine = viewer.entities.add({
     }
 });
 
+var dynamicLine = viewer.entities.add({
+    name : 'Dynamic yellow polyline',
+    polyline : {
+
+        positions: new Cesium.CallbackProperty(function(){
+          return [Cesium.Cartesian3.fromDegrees(-70, 42, 1000),
+                  Cesium.Cartesian3.fromDegrees(-122, 30, 1000)];
+        }, false),
+
+        width : 2,
+
+        material : new Cesium.PolylineDashMaterialProperty({
+            duty : 0.5,
+            dashLength : 15.0,
+            color : Cesium.Color.YELLOW
+        })
+
+    }
+});
+
+
 viewer.zoomTo(viewer.entities);
 //Sandcastle_End
 Sandcastle.finishedLoading();
