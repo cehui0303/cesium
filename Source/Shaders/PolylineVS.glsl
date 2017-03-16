@@ -17,6 +17,7 @@ varying float v_width;
 varying vec4  czm_pickColor;
 varying float v_arcLength;
 varying float v_metersPerPixel;
+varying float v_angle;
 
 void main()
 {
@@ -93,6 +94,25 @@ void main()
 
     float fCameraHeight = length(czm_viewerPositionWC) - 6378137.0;
     v_metersPerPixel = clamp(czm_metersPerPixel(vec4(0.0, 0.0, -fCameraHeight, 1.0)), 100.0, 100000.0);
+
+    // Try to get the general direction of the line in clip space, is it going up and down or left and right.
+    vec4 prevEC = czm_modelViewRelativeToEye * prev;
+    vec4 nextEC = czm_modelViewRelativeToEye * next;
+    vec4 pEC = czm_modelViewRelativeToEye * p;
+
+    vec4 prevClip = czm_viewportOrthographic * prevEC;
+    vec4 nextClip = czm_viewportOrthographic * nextEC;
+    vec4 pClip = czm_viewportOrthographic * pEC;
+
+    vec2 dir;
+    if (usePrev) {
+        dir = normalize(pClip.xy - prevClip.xy);
+    }
+    else {
+        dir = normalize(nextClip.xy - pClip.xy);
+    }
+    float dotProd = abs(dot(dir, vec2(1,0)));
+    v_angle = dotProd;
 
     vec4 positionWC = getPolylineWindowCoordinates(p, prev, next, expandDir, width, usePrev);
     gl_Position = czm_viewportOrthographic * positionWC * show;

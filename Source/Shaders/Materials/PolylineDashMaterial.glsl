@@ -9,6 +9,7 @@ varying float v_width;
 const float maskLength = 16.0;
 
 varying float v_arcLength;
+varying float v_angle;
 
 varying float v_metersPerPixel;
 
@@ -16,16 +17,14 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
 {
     czm_material material = czm_getDefaultMaterial(materialInput);
 
-    float metersPerPixel = v_metersPerPixel;
-    float dashLengthMeters = metersPerPixel * dashLength / 1000000.0;
+    vec2 oddOrEven = floor( fract( (gl_FragCoord.xy / dashLength) * 0.5 ) + 0.5 );
 
-    float omega = fract(v_arcLength / dashLengthMeters);
-    float dash = (1. - smoothstep(duty - .05, duty, omega));
-    float maskIndex = floor(omega * maskLength);
-    float maskTest = floor(dashPattern / pow(2.0, maskIndex));
-    if (mod(maskTest, 2.0) < 1.0)
-      dash = 0.0;
+    // Horizontal
+    if( v_angle > 0.5 && oddOrEven.x > 0.5) discard;
+    // Vertical
+    if( v_angle <= 0.5 && oddOrEven.y > 0.5) discard;
+
     material.emission = color.rgb;
-    material.alpha = dash * color.a;
+    material.alpha = color.a;
     return material;
 }
