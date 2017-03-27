@@ -37,8 +37,6 @@ void main()
 
     vec4 positionWC = getPolylineWindowCoordinates(p, prev, next, expandDir, width, usePrev);
 
-
-    // Try to get the general direction of the line in clip space, is it going up and down or left and right.
     vec4 prevEC = czm_modelViewRelativeToEye * prev;
     vec4 nextEC = czm_modelViewRelativeToEye * next;
     vec4 pEC = czm_modelViewRelativeToEye * p;
@@ -54,8 +52,11 @@ void main()
     else {
         dir = normalize(nextClip.xy - pClip.xy);
     }
-    float dotProd = abs(dot(dir, vec2(1,0)));
-    v_angle = dotProd;
+    v_angle = atan(dir.x, dir.y) - atan(1.0, 0.0);
+
+    // Normalize the angle so it doesn't change rapidly between segments.
+    const float den = czm_pi / 4.0;
+    v_angle = floor(v_angle / den + 0.5) * den;
 
     gl_Position = czm_viewportOrthographic * positionWC;
 }

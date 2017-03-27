@@ -13,16 +13,27 @@ varying float v_angle;
 
 varying float v_metersPerPixel;
 
+mat2 rotate(float rad) {
+    float c = cos(rad);
+    float s = sin(rad);
+    return mat2(
+        c, s,
+        -s, c
+    );
+}
+
 czm_material czm_getMaterial(czm_materialInput materialInput)
 {
     czm_material material = czm_getDefaultMaterial(materialInput);
 
-    vec2 oddOrEven = floor( fract( (gl_FragCoord.xy / dashLength) * 0.5 ) + 0.5 );
+    vec2 pos = rotate(v_angle) * gl_FragCoord.xy;
+
+    vec2 oddOrEven = floor( fract( (pos.xy / dashLength) * 0.5 ) + 0.5 );
 
     // Horizontal
-    if( v_angle > 0.5 && oddOrEven.x > 0.5) discard;
+    if(oddOrEven.x > 0.5) discard;
     // Vertical
-    if( v_angle <= 0.5 && oddOrEven.y > 0.5) discard;
+    //if( v_angle <= 0.5 && oddOrEven.y > 0.5) discard;
 
     material.emission = color.rgb;
     material.alpha = color.a;
