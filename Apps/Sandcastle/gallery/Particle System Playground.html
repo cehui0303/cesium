@@ -71,6 +71,23 @@ viewer.clock.multiplier = 1;
 //Set timeline to simulation bounds
 viewer.timeline.zoomTo(start, stop);
 
+var particleCanvas;
+
+function getImage() {
+    if (!Cesium.defined(particleCanvas)) {
+        particleCanvas = document.createElement('canvas');
+        particleCanvas.width = 20;
+        particleCanvas.height = 20;
+        var context2D = particleCanvas.getContext('2d');
+        context2D.beginPath();
+        context2D.arc(8, 8, 8, 0, Cesium.Math.TWO_PI, true);
+        context2D.closePath();
+        context2D.fillStyle = 'rgb(255, 255, 255)';
+        context2D.fill();
+    }
+    return particleCanvas;
+}
+
 var entityPosition = new Cesium.Cartesian3();
 var entityOrientation = new Cesium.Quaternion();
 var rotationMatrix = new Cesium.Matrix3();
@@ -91,18 +108,29 @@ viewer.trackedEntity = entity;
 
 
 function createFire(position) {
+    
+    var startColor = Cesium.Color.fromRandom({alpha:1.0});
+    var endColor = Cesium.Color.fromRandom({alpha:1.0});
+    
+    var size = Cesium.Math.randomBetween(3.0, 30.0);
+    var coneAngle = Cesium.Math.randomBetween(15.0, 90.0);
+    
+    var rate = Cesium.Math.randomBetween(100.0, 1000.0);
+    
 
     var particleSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
-        image : '../../SampleData/fire.png',
-        width : 20,
-        height : 20,
-        life : 0.5,
-        minimumSpeed : 15.0,
+        image : getImage(),
+        startColor: startColor,
+        endColor: endColor,
+        width : size,
+        height : size,
+        minimumLife : 0.2,
+        maximumLife: 4.0,
+        minimumSpeed : 0.0,
         maximumSpeed : 25.0,
         // Emitter parameters
-        emitter : new Cesium.ConeEmitter(Cesium.Math.toRadians(75.0)),
-        //rate : 5.0,
-        rate: 1000.0,
+        emitter : new Cesium.ConeEmitter(Cesium.Math.toRadians(coneAngle)),
+        rate: rate,
         lifeTime : 1.0,
         loop: false,
         modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(position, undefined, modelMatrix)
