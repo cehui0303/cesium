@@ -315,11 +315,16 @@ define([
                         neighborIndex = neighbors[j];
                         neighborPoint = points[neighborIndex];
                         if (!neighborPoint.clustered) {
-                            ++numPoints;
 
                             collection = neighborPoint.collection;
                             collectionIndex = neighborPoint.index;
-                            ids.push(collection.get(collectionIndex).id);
+                            var item = collection.get(collectionIndex);
+
+                            if (ids.length === 0 || (entityCluster.canCluster === undefined || entityCluster.canCluster(item.id, ids[0])))
+                            {
+                                ++numPoints;
+                                ids.push(item.id);
+                            }
                         }
                     }
 
@@ -362,14 +367,17 @@ define([
                     neighborPoint = points[neighborIndex];
                     if (!neighborPoint.clustered) {
                         var neighborItem = neighborPoint.collection.get(neighborPoint.index);
-                        var neighborBBox = getBoundingBox(neighborItem, neighborPoint.coord, pixelRange, entityCluster, neighborBoundingRectangleScratch);
+                        if (entityCluster.canCluster === undefined || entityCluster.canCluster(item.id, neighborItem.id))
+                        {
+                            var neighborBBox = getBoundingBox(neighborItem, neighborPoint.coord, pixelRange, entityCluster, neighborBoundingRectangleScratch);
 
-                        Cartesian3.add(neighborItem.position, clusterPosition, clusterPosition);
+                            Cartesian3.add(neighborItem.position, clusterPosition, clusterPosition);
 
-                        BoundingRectangle.union(totalBBox, neighborBBox, totalBBox);
-                        ++numPoints;
+                            BoundingRectangle.union(totalBBox, neighborBBox, totalBBox);
+                            ++numPoints;
 
-                        ids.push(neighborItem.id);
+                            ids.push(neighborItem.id);
+                        }
                     }
                 }
 
