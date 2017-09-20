@@ -21,6 +21,8 @@ varying vec3 v_positionEC;
 varying vec3 v_textureCoordinates;
 varying vec3 v_normalMC;
 varying vec3 v_normalEC;
+varying float v_slope;
+varying float v_height;
 
 #ifdef FOG
 varying float v_distance;
@@ -160,6 +162,11 @@ void main()
     v_positionEC = (u_modifiedModelView * vec4(position, 1.0)).xyz;
     v_positionMC = position3DWC;                                 // position in model coordinates
 #endif
+
+    vec3 finalNormal = normalize(v_normalMC);
+    vec3 worldNormal = normalize(v_positionMC.xyz);
+    v_slope = abs(dot(worldNormal, finalNormal));
+    v_height = height;
 
 #ifdef FOG
     AtmosphereColor atmosColor = computeGroundAtmosphereFromSpace(position3DWC);
