@@ -28,6 +28,9 @@ define([
         this.baseVertexShaderSource = undefined;
         this.baseFragmentShaderSource = undefined;
 
+        this.fragmentDefines = [];
+        this.vertexDefines = [];
+
         this._shadersByTexturesFlags = [];
         this._pickShaderPrograms = [];
     }
@@ -111,6 +114,18 @@ define([
 
             vs.defines.push(quantizationDefine);
             fs.defines.push('TEXTURE_UNITS ' + numberOfDayTextures);
+
+            if (this.fragmentDefines) {
+                for (var i = 0; i < this.fragmentDefines.length; i++) {
+                    fs.defines.push( this.fragmentDefines[i]);
+                }
+            }
+
+            if (this.vertexDefines) {
+                for (var i = 0; i < this.vertexDefines.length; i++) {
+                    vs.defines.push( this.vertexDefines[i]);
+                }
+            }
 
             if (applyBrightness) {
                 fs.defines.push('APPLY_BRIGHTNESS');

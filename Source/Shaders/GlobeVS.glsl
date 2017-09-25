@@ -30,6 +30,12 @@ varying vec3 v_mieColor;
 varying vec3 v_rayleighColor;
 #endif
 
+#ifdef VS_HEADER
+VS_HEADER
+#endif
+
+uniform float u_test;
+
 // These functions are generated at runtime.
 vec4 getPosition(vec3 position, float height, vec2 textureCoordinates);
 float get2DYPositionFraction(vec2 textureCoordinates);

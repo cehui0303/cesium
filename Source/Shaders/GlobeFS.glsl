@@ -66,6 +66,10 @@ varying vec3 v_rayleighColor;
 varying vec3 v_mieColor;
 #endif
 
+#ifdef FS_HEADER
+FS_HEADER
+#endif
+
 vec4 sampleAndBlend(
     vec4 previousColor,
     sampler2D texture,
@@ -182,6 +186,10 @@ void main()
     }
 #endif
 
+#ifdef PRELIGHTING
+PRELIGHTING
+#endif
+
 #ifdef ENABLE_VERTEX_LIGHTING
     float diffuseIntensity = clamp(czm_getLambertDiffuse(czm_sunDirectionEC, normalize(v_normalEC)) * 0.9 + 0.3, 0.0, 1.0);
     vec4 finalColor = vec4(color.rgb * diffuseIntensity, color.a);
@@ -197,7 +205,7 @@ void main()
     vec4 finalColor = color;
 #endif
 
-    vec4 slopeColor = vec4(1.0, 1.0, 1.0, 1.0);
+    //vec4 slopeColor = vec4(1.0, 1.0, 1.0, 1.0);
 
     // Apply a color ramp to the slope.
     /*
@@ -220,9 +228,13 @@ void main()
 
     //vec4 heightColor = vec4(mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), clamp(0.0, 1.0, v_height / 2000.0)), 1.0);
     //finalColor = vec4(mix(heightColor.xyz, color.xyz, 0.5), 1.0);
-    slopeColor = vec4(mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), v_slope), 1.0);
-    //finalColor = vec4(mix(slopeColor.xyz, color.xyz, 1.0), 1.0);
-    finalColor = slopeColor;
+
+    //slopeColor = vec4(mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), v_slope), 1.0);
+    //finalColor = slopeColor;
+
+    //#ifdef FINAL_COLOR
+    //FINAL_COLOR(finalColor);
+    //#endif
 
 #ifdef FOG
     const float fExposure = 2.0;
