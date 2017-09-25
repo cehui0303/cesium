@@ -205,37 +205,6 @@ PRELIGHTING
     vec4 finalColor = color;
 #endif
 
-    //vec4 slopeColor = vec4(1.0, 1.0, 1.0, 1.0);
-
-    // Apply a color ramp to the slope.
-    /*
-    if (v_slope < 0.1) {
-        slopeColor = vec4(1.0, 0.0, 0.0, 1.0);
-    }
-    else if (v_slope < 0.25) {
-        slopeColor = vec4(0.0, 1.0, 0.0, 1.0);
-    }
-    else if (v_slope < 0.5) {
-        slopeColor = vec4(0.0, 1.0, 1.0, 1.0);
-    }
-    else if (v_slope < 0.75) {
-        slopeColor = vec4(0.0, 0.0, 1.0, 1.0);
-    }
-    else {
-        slopeColor = vec4(0.0, 0.0, 0.0, 1.0);
-    }
-    */
-
-    //vec4 heightColor = vec4(mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), clamp(0.0, 1.0, v_height / 2000.0)), 1.0);
-    //finalColor = vec4(mix(heightColor.xyz, color.xyz, 0.5), 1.0);
-
-    //slopeColor = vec4(mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), v_slope), 1.0);
-    //finalColor = slopeColor;
-
-    //#ifdef FINAL_COLOR
-    //FINAL_COLOR(finalColor);
-    //#endif
-
 #ifdef FOG
     const float fExposure = 2.0;
     vec3 fogColor = v_mieColor + finalColor.rgb * v_rayleighColor;
