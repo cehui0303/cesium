@@ -3,6 +3,7 @@ define([
         '../Core/buildModuleUrl',
         '../Core/Cartesian3',
         '../Core/Cartographic',
+        '../Core/Color',
         '../Core/defaultValue',
         '../Core/defined',
         '../Core/defineProperties',
@@ -24,6 +25,7 @@ define([
         './GlobeSurfaceShaderSet',
         './GlobeSurfaceTileProvider',
         './ImageryLayerCollection',
+        './Material',
         './QuadtreePrimitive',
         './SceneMode',
         './ShadowMode'
@@ -32,6 +34,7 @@ define([
         buildModuleUrl,
         Cartesian3,
         Cartographic,
+        Color,
         defaultValue,
         defined,
         defineProperties,
@@ -53,6 +56,7 @@ define([
         GlobeSurfaceShaderSet,
         GlobeSurfaceTileProvider,
         ImageryLayerCollection,
+        Material,
         QuadtreePrimitive,
         SceneMode,
         ShadowMode) {
@@ -80,12 +84,25 @@ define([
 
         this._surfaceShaderSet = new GlobeSurfaceShaderSet();
 
+        //this.material = Material.fromType('Color');
+        //this.material.uniforms.color = new Color(1.0, 1.0, 0.0, 1.0);
+        //this.material = Material.fromType('Checkerboard')
+        //this.material = Material.fromType('Grid');
+        this.material = new Material({
+            fabric : {
+                type : 'Image',
+                uniforms : {
+                    image : '../images/Cesium_Logo_Color.jpg'
+                }
+            }
+       });
+
         this._surfaceShaderSet.baseVertexShaderSource = new ShaderSource({
             sources : [GroundAtmosphere, GlobeVS]
         });
 
         this._surfaceShaderSet.baseFragmentShaderSource = new ShaderSource({
-            sources : [GlobeFS]
+            sources : [this.material.shaderSource, GlobeFS]
         });
 
         this._surface = new QuadtreePrimitive({
@@ -95,6 +112,8 @@ define([
                 surfaceShaderSet : this._surfaceShaderSet
             })
         });
+        // Set the material uniform map to the materials
+        this._surface._tileProvider.uniformMap = this.material._uniforms;
 
         this._terrainProvider = terrainProvider;
         this._terrainProviderChanged = new Event();
@@ -524,6 +543,8 @@ define([
         if (!this.show) {
             return;
         }
+
+        this.material.update(frameState.context);
 
         var surface = this._surface;
         var pass = frameState.passes;
