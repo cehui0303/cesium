@@ -57,8 +57,9 @@ varying vec3 v_positionEC;
 varying vec3 v_textureCoordinates;
 varying vec3 v_normalMC;
 varying vec3 v_normalEC;
-varying float v_slope;
-varying float v_height;
+// Moved to
+//varying float v_slope;
+//varying float v_height;
 
 #ifdef FOG
 varying float v_distance;

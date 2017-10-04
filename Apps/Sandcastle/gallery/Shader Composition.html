@@ -64,50 +64,6 @@ Cesium.knockout.track(viewModel);
 var toolbar = document.getElementById('toolbar');
 Cesium.knockout.applyBindings(viewModel, toolbar);
 
-viewer.scene.globe._surface._tileProvider.uniformMap = {
-    u_slopeMix: function() {
-        return viewModel.slopeMix;
-    }
-};
-
-//Just color it red
-//var preLighting = '{color = vec4(1.0, 0.0, 0.0, 1.0);}';
-
-// Shade it from white to black on the edges based on the slope
-/*
-var preLighting = '{' +
-    '    vec3 slopeColor = mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), v_slope);' +
-    '    color = vec4(mix(color.xyz, slopeColor, u_slopeMix), 1.0);' +
-    '}';
-*/
-
-var fragmentHeader = 'uniform float u_slopeMix;';
-
-viewer.scene.globe._surfaceShaderSet.fragmentDefines.push('FS_HEADER ' + fragmentHeader);
-
-var preLighting = '{' +
-    'vec4 slopeColor = vec4(1.0, 1.0, 1.0, 1.0);'+
-    'if (v_slope < 0.1) {'+
-    '    slopeColor = vec4(1.0, 0.0, 0.0, 1.0);'+
-    '}'+
-    'else if (v_slope < 0.25) {'+
-    '    slopeColor = vec4(0.0, 1.0, 0.0, 1.0);'+
-    '}'+
-    'else if (v_slope < 0.5) {'+
-    '    slopeColor = vec4(0.0, 1.0, 1.0, 1.0);'+
-    '}'+
-    'else if (v_slope < 0.75) {'+
-    '    slopeColor = vec4(0.0, 0.0, 1.0, 1.0);'+
-    '}'+
-    'else {'+
-    '    slopeColor = vec4(1.0, 1.0, 1.0, 1.0);'+
-    '}'+
-    'color = vec4(mix(color.xyz, slopeColor.xyz, u_slopeMix), 1.0);' +
-    '}';
-
-viewer.scene.globe._surfaceShaderSet.fragmentDefines.push( 'PRELIGHTING ' + preLighting);
-
-
 // setup alternative terrain providers
 var ellipsoidProvider = new Cesium.EllipsoidTerrainProvider();
 

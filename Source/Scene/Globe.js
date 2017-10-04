@@ -28,7 +28,10 @@ define([
         './Material',
         './QuadtreePrimitive',
         './SceneMode',
-        './ShadowMode'
+        './ShadowMode',
+        '../Shaders/Materials/ElevationContourMaterial',
+        '../Shaders/Materials/ElevationRampMaterial',
+        '../Shaders/Materials/SlopeMaterial'
     ], function(
         BoundingSphere,
         buildModuleUrl,
@@ -59,7 +62,10 @@ define([
         Material,
         QuadtreePrimitive,
         SceneMode,
-        ShadowMode) {
+        ShadowMode,
+        ElevationContourMaterial,
+        ElevationRampMaterial,
+        SlopeMaterial) {
     'use strict';
 
     /**
@@ -88,12 +94,22 @@ define([
         //this.material.uniforms.color = new Color(1.0, 1.0, 0.0, 1.0);
         //this.material = Material.fromType('Checkerboard')
         //this.material = Material.fromType('Grid');
+        /*
         this.material = new Material({
             fabric : {
                 type : 'Image',
                 uniforms : {
                     image : '../images/Cesium_Logo_Color.jpg'
                 }
+            }
+       });
+        */
+
+        this.material = new Material({
+            fabric : {
+                //source : SlopeMaterial
+                //source: ElevationContourMaterial
+                source: ElevationRampMaterial
             }
        });
 
