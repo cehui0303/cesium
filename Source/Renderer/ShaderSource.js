@@ -264,6 +264,7 @@ define([
             result = modernizeShader(result, isFragmentShader, true);
         }
 
+        console.log(result);
         return result;
     }
 

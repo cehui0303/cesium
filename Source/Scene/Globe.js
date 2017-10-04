@@ -105,11 +105,30 @@ define([
        });
         */
 
+        /*
         this.material = new Material({
             fabric : {
                 //source : SlopeMaterial
                 source: ElevationContourMaterial
                 //source: ElevationRampMaterial
+            }
+       });
+       */
+
+       this.material = new Material({
+            fabric : {
+                materials : {
+                    contour: {
+                        source: ElevationContourMaterial
+                    },
+                    slope: {
+                        source: SlopeMaterial
+                    }
+                },
+                components : {
+                  //diffuse : 'mix(contour.diffuse, slope.diffuse, 0.5)'
+                  diffuse : 'mix(mix(materialInput.diffuse, contour.diffuse, contour.alpha), slope.diffuse, slope.alpha)'
+                }
             }
        });
 

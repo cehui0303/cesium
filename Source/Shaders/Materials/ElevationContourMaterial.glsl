@@ -7,14 +7,16 @@ czm_material czm_getMaterial(czm_materialInput materialInput)
 
     if (fract(v_height / 100.0) < 0.1 ) {
        material.diffuse = vec3(1.0, 0.0, 0.0);
+       material.alpha = 1.0;
+    }
+    else {
+        material.alpha = 0.0;
     }
     /*
     else {
        material.diffuse = vec3(0.0, 1.0, 0.0);
     }
     */
-
-    material.alpha = 1.0;
 
     return material;
 }
