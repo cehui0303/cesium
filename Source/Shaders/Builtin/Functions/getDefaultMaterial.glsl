@@ -4,10 +4,10 @@
  * The default normal value is given by materialInput.normalEC.
  *
  * @name czm_getDefaultMaterial
- * @glslFunction 
+ * @glslFunction
  *
  * @param {czm_materialInput} input The input used to construct the default material.
- * 
+ *
  * @returns {czm_material} The default material.
  *
  * @see czm_materialInput
@@ -17,7 +17,7 @@
 czm_material czm_getDefaultMaterial(czm_materialInput materialInput)
 {
     czm_material material;
-    material.diffuse = vec3(0.0);
+    material.diffuse = materialInput.diffuse;
     material.specular = 0.0;
     material.shininess = 1.0;
     material.normal = materialInput.normalEC;

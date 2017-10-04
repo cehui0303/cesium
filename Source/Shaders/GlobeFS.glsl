@@ -193,6 +193,7 @@ PRELIGHTING
 
 czm_materialInput materialInput;
 materialInput.st = v_textureCoordinates.st;
+materialInput.diffuse = color.xyz;
 /*
 // todo
     materialInput.normalEC = normalEC;

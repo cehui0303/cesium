@@ -108,8 +108,8 @@ define([
         this.material = new Material({
             fabric : {
                 //source : SlopeMaterial
-                //source: ElevationContourMaterial
-                source: ElevationRampMaterial
+                source: ElevationContourMaterial
+                //source: ElevationRampMaterial
             }
        });
 

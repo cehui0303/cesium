@@ -19,4 +19,7 @@ struct czm_materialInput
     vec3 normalEC;
     mat3 tangentToEyeMatrix;
     vec3 positionToEyeEC;
+
+    // Testing chaining materials together.
+    vec3 diffuse;
 };
