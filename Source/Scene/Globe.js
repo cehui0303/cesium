@@ -105,7 +105,6 @@ define([
        });
         */
 
-        /*
         this.material = new Material({
             fabric : {
                 //source : SlopeMaterial
@@ -113,8 +112,8 @@ define([
                 //source: ElevationRampMaterial
             }
        });
-       */
 
+       /*
        this.material = new Material({
             fabric : {
                 materials : {
@@ -131,10 +130,24 @@ define([
                 }
             }
        });
+       */
+
 
         this._surfaceShaderSet.baseVertexShaderSource = new ShaderSource({
             sources : [GroundAtmosphere, GlobeVS]
         });
+
+        var heightFunction = "varying float v_height;\n" +
+                             "v_height = height;\n";
+
+        var slopeFunction = "varying float v_slope;\n" +
+                            "vec3 finalNormal = normalize(v_normalMC);\n" +
+                            "vec3 worldNormal = normalize(v_positionMC.xyz);\n" +
+                            "v_slope = abs(dot(worldNormal, finalNormal));\n";
+
+        //this._surfaceShaderSet.baseVertexShaderSource.defines.push("VS_FUNCTIONS v_height=height;")
+        var functions = heightFunction + "\n" + slopeFunction;
+        this._surfaceShaderSet.baseVertexShaderSource.vsFunctions = functions;
 
         this._surfaceShaderSet.baseFragmentShaderSource = new ShaderSource({
             sources : [this.material.shaderSource, GlobeFS]

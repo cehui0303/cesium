@@ -169,6 +169,8 @@ define([
 
         combinedSources = removeComments(combinedSources);
 
+        combinedSources = combinedSources.replace("VS_FUNCTIONS", shaderSource.vsFunctions);
+
         // Extract existing shader version from sources
         var version;
         combinedSources = combinedSources.replace(/#version\s+(.*?)\n/gm, function(match, group1) {
@@ -340,12 +342,14 @@ define([
     }
 
     ShaderSource.prototype.clone = function() {
-        return new ShaderSource({
+        var sh = new ShaderSource({
             sources : this.sources,
             defines : this.defines,
             pickColorQuantifier : this.pickColorQualifier,
             includeBuiltIns : this.includeBuiltIns
         });
+        sh.vsFunctions = this.vsFunctions;
+        return sh;
     };
 
     ShaderSource.replaceMain = function(source, renamedMain) {

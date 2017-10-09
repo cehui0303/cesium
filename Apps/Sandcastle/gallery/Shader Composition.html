@@ -151,7 +151,20 @@ Sandcastle.addToggleButton('Enable Lighting', viewer.scene.globe.enableLighting,
 });
 
 Sandcastle.addToggleButton('Enable fog', viewer.scene.fog.enabled, function(checked) {
-    viewer.scene.fog.enabled = checked;
+        var heightFunction = "varying float v_height;\n" +
+                             "v_height = height + sin(czm_frameNumber * czm_pi / 60.0) * 600.0;\n";
+
+        var slopeFunction = "varying float v_slope;\n" +
+                            "vec3 finalNormal = normalize(v_normalMC);\n" +
+                            "vec3 worldNormal = normalize(v_positionMC.xyz);\n" +
+                            "v_slope = abs(dot(worldNormal, finalNormal));\n";
+
+    var functions = heightFunction + "\n" + slopeFunction;
+    viewer.scene.globe._surfaceShaderSet.baseVertexShaderSource.vsFunctions = functions;
+    viewer.scene.globe._surfaceShaderSet._shadersByTexturesFlags = [];
+    viewer.scene.globe._surface._tileProvider._usedDrawCommands = 0;
+    viewer.scene.globe._surface._tileProvider._drawCommands = [];
+
 });
 
 //Sandcastle_End

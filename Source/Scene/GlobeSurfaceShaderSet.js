@@ -93,6 +93,8 @@ define([
                     (applySplit << 15);
 
         var surfaceShader = surfaceTile.surfaceShader;
+        surfaceShader = undefined;
+        // This uses the tiles existing shaders
         if (defined(surfaceShader) &&
             surfaceShader.numberOfDayTextures === numberOfDayTextures &&
             surfaceShader.flags === flags) {
@@ -106,7 +108,9 @@ define([
             shadersByFlags = this._shadersByTexturesFlags[numberOfDayTextures] = [];
         }
 
+        // This just uses it cached by the flags.
         surfaceShader = shadersByFlags[flags];
+        surfaceShader = undefined;
         if (!defined(surfaceShader)) {
             // Cache miss - we've never seen this combination of numberOfDayTextures and flags before.
             var vs = this.baseVertexShaderSource.clone();
