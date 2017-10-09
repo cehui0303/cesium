@@ -199,6 +199,26 @@ define([
             return '\n';
         });
 
+        var uniforms = new Set();
+        combinedSources = combinedSources.replace(/uniform.*\n/gm, function(match) {
+            // Extract uniforms to put at the top
+            uniforms.add(match);
+
+            // Replace original uniforms directive with a new line so the line numbers
+            // are not off by one.
+            return '\n';
+        });
+
+        var varyings = new Set();
+        combinedSources = combinedSources.replace(/varying.*\n/gm, function(match) {
+            // Extract varying to put at the top
+            varyings.add(match);
+
+            // Replace original varying directive with a new line so the line numbers
+            // are not off by one.
+            return '\n';
+        });
+
         // Remove precision qualifier
         combinedSources = combinedSources.replace(/precision\s(lowp|mediump|highp)\s(float|int);/, '');
 
@@ -242,6 +262,16 @@ define([
             }
         }
 
+        // Prepend uniforms for uber-shaders
+        for (let uniform of uniforms.values()) {
+            result += uniform + "\n";
+        }
+
+        // Prepend varyings for uber-shaders
+        for (let varying of varyings.values()) {
+            result += varying + "\n";
+        }
+
         // GLSLModernizer inserts its own layout qualifiers
         // at this position in the source
         if (context.webgl2) {
@@ -264,7 +294,6 @@ define([
             result = modernizeShader(result, isFragmentShader, true);
         }
 
-        console.log(result);
         return result;
     }
 
