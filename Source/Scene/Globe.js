@@ -90,32 +90,8 @@ define([
 
         this._surfaceShaderSet = new GlobeSurfaceShaderSet();
 
-        //this.material = Material.fromType('Color');
-        //this.material.uniforms.color = new Color(1.0, 1.0, 0.0, 1.0);
-        //this.material = Material.fromType('Checkerboard')
-        //this.material = Material.fromType('Grid');
-        /*
+/*
         this.material = new Material({
-            fabric : {
-                type : 'Image',
-                uniforms : {
-                    image : '../images/Cesium_Logo_Color.jpg'
-                }
-            }
-       });
-        */
-
-        /*
-        this.material = new Material({
-            fabric : {
-                //source : SlopeMaterial
-                source: ElevationContourMaterial
-                //source: ElevationRampMaterial
-            }
-       });
-       */
-
-       this.material = new Material({
             fabric : {
                 materials : {
                     contour: {
@@ -130,15 +106,11 @@ define([
                   diffuse : 'mix(mix(materialInput.diffuse, contour.diffuse, contour.alpha), slope.diffuse, slope.alpha)'
                 }
             }
-       });
-
-        this._surfaceShaderSet.baseVertexShaderSource = new ShaderSource({
-            sources : [GroundAtmosphere, GlobeVS]
         });
+        */
+        this._material = undefined;
 
-        this._surfaceShaderSet.baseFragmentShaderSource = new ShaderSource({
-            sources : [this.material.shaderSource, GlobeFS]
-        });
+        this.dirtyShaders();
 
         this._surface = new QuadtreePrimitive({
             tileProvider : new GlobeSurfaceTileProvider({
@@ -147,8 +119,6 @@ define([
                 surfaceShaderSet : this._surfaceShaderSet
             })
         });
-        // Set the material uniform map to the materials
-        this._surface._tileProvider.uniformMap = this.material._uniforms;
 
         this._terrainProvider = terrainProvider;
         this._terrainProviderChanged = new Event();
@@ -330,7 +300,32 @@ define([
             get: function() {
                 return this._surface.tileLoadProgressEvent;
             }
-        }
+        },
+
+        /**
+         * Gets or sets the material appearance of the Globe.  This can be one of several built-in {@link Material} objects or a custom material, scripted with
+         * {@link https://github.com/AnalyticalGraphicsInc/cesium/wiki/Fabric|Fabric}.
+         * @memberof Globe.prototype
+         * @type {Material}
+         */
+        material: {
+            get: function() {
+                return this._material;
+            },
+            set: function(material) {
+                //>>includeStart('debug', pragmas.debug);
+                if (!defined(material)) {
+                    throw new DeveloperError('material is required.');
+                }
+                //>>includeEnd('debug');
+
+                if (this._material !== material) {
+                    this._material = material;
+                    this.dirtyShaders();
+                }
+            }
+        },
+
     });
 
     function createComparePickTileFunction(rayOrigin) {
@@ -579,7 +574,9 @@ define([
             return;
         }
 
-        this.material.update(frameState.context);
+        if (this._material) {
+            this._material.update(frameState.context);
+        }
 
         var surface = this._surface;
         var pass = frameState.passes;
@@ -643,6 +640,28 @@ define([
         this._surface = this._surface && this._surface.destroy();
         this._oceanNormalMap = this._oceanNormalMap && this._oceanNormalMap.destroy();
         return destroyObject(this);
+    };
+
+    Globe.prototype.dirtyShaders = function() {
+        this._surfaceShaderSet.baseVertexShaderSource = new ShaderSource({
+            sources : [GroundAtmosphere, GlobeVS]
+        });
+
+        var fragmentSources = [];
+        var fragmentDefines = [];
+        if (this._material) {
+            fragmentSources.push(this._material.shaderSource);
+            fragmentDefines.push("APPLY_MATERIAL");
+
+            // Set the material uniform map to the materials
+            this._surface._tileProvider.uniformMap = this._material._uniforms;
+        }
+        fragmentSources.push(GlobeFS);
+
+        this._surfaceShaderSet.baseFragmentShaderSource = new ShaderSource({
+            sources : fragmentSources,
+            defines: fragmentDefines
+        });
     };
 
     return Globe;

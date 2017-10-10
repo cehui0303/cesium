@@ -191,19 +191,20 @@ void main()
 PRELIGHTING
 #endif
 
-czm_materialInput materialInput;
-materialInput.st = v_textureCoordinates.st;
-materialInput.diffuse = color.xyz;
-/*
-// todo
-    materialInput.normalEC = normalEC;
-    materialInput.tangentToEyeMatrix = tangentToEyeMatrix;
-    materialInput.positionToEyeEC = positionToEyeEC;
-    materialInput.st = v_st;
-    */
-czm_material material = czm_getMaterial(materialInput);
-color.xyz = material.diffuse;
-color.a = material.alpha;
+#ifdef APPLY_MATERIAL
+    czm_materialInput materialInput;
+    materialInput.st = v_textureCoordinates.st;
+    //materialInput.normalEC = normalize(v_normalEC);
+    materialInput.diffuse = color.xyz;
+    //materialInput.positionToEyeEC = v_positionEC;
+    /*
+    // todo
+        materialInput.tangentToEyeMatrix = tangentToEyeMatrix;
+        */
+    czm_material material = czm_getMaterial(materialInput);
+    color.xyz = material.diffuse;
+    color.a = material.alpha;
+#endif
 
 #ifdef ENABLE_VERTEX_LIGHTING
     float diffuseIntensity = clamp(czm_getLambertDiffuse(czm_sunDirectionEC, normalize(v_normalEC)) * 0.9 + 0.3, 0.0, 1.0);

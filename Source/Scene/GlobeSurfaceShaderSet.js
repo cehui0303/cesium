@@ -93,6 +93,7 @@ define([
                     (applySplit << 15);
 
         var surfaceShader = surfaceTile.surfaceShader;
+        surfaceShader = undefined;
         if (defined(surfaceShader) &&
             surfaceShader.numberOfDayTextures === numberOfDayTextures &&
             surfaceShader.flags === flags) {
@@ -107,6 +108,7 @@ define([
         }
 
         surfaceShader = shadersByFlags[flags];
+        surfaceShader = undefined;
         if (!defined(surfaceShader)) {
             // Cache miss - we've never seen this combination of numberOfDayTextures and flags before.
             var vs = this.baseVertexShaderSource.clone();
