@@ -24,13 +24,14 @@
 <div id="loadingOverlay"><h1>Loading...</h1></div>
 <div id="toolbar">
 <div id="terrainMenu"></div>
+<div id="materialMenu"></div>
 <div id="zoomButtons"></div>
 <div id="sampleButtons"></div>
 <table><tbody>
     <tr>
-        <td>Slope Mix</td>
+        <td>Contour Spacing</td>
         <td>
-            <input type="range" min="0.0" max="1.0" step="0.01" data-bind="value: slopeMix, valueUpdate: 'input'">
+            <input type="range" min="1.0" max="500.0 step="1.0" data-bind="value: spacing, valueUpdate: 'input'">
         </td>
     </tr>
 </tbody>
@@ -51,10 +52,12 @@ var cesiumTerrainProviderMeshes = new Cesium.CesiumTerrainProvider({
     requestVertexNormals : true
 });
 viewer.terrainProvider = cesiumTerrainProviderMeshes;
+// Enable lighting so the normal flows through the shader
+viewer.scene.globe.enableLighting = true;
 
 // The viewModel tracks the state of our mini application.
 var viewModel = {
-    slopeMix: 1.0
+    spacing: 100.0
 };
 
 // Convert the viewModel members into knockout observables.
@@ -137,8 +140,6 @@ Sandcastle.addDefaultToolbarMenu([{
     }
 }], 'zoomButtons');
 
-var terrainSamplePositions;
-
 function lookAtMtEverest() {
     var target = new Cesium.Cartesian3(300770.50872389384, 5634912.131394585, 2978152.2865545116);
     var offset = new Cesium.Cartesian3(6344.974098678562, -793.3419798081741, 2499.9508860763162);
@@ -146,13 +147,59 @@ function lookAtMtEverest() {
     viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
 }
 
-Sandcastle.addToggleButton('Enable Lighting', viewer.scene.globe.enableLighting, function(checked) {
-    viewer.scene.globe.enableLighting = checked;
-});
 
-Sandcastle.addToggleButton('Enable fog', viewer.scene.fog.enabled, function(checked) {
-    viewer.scene.fog.enabled = checked;
-});
+var shader = "varying float v_height;\n" +
+    "uniform sampler2D image;\n" +
+"czm_material czm_getMaterial(czm_materialInput materialInput)\n" +
+"{\n" +
+"    czm_material material = czm_getDefaultMaterial(materialInput);\n" +
+"    material.diffuse = texture2D(image, vec2(0.5, clamp(v_height / 9000.0, 0.0, 1.0))).rgb;\n" +
+"    return material;\n" +
+"}\n";
+
+
+Sandcastle.addToolbarMenu([{
+    text : 'No Material',
+    onselect : function() {
+        viewer.scene.globe.material = undefined;
+    }
+}, {
+    text : 'Elevation Color Ramp Material',
+    onselect : function() {
+        viewer.scene.globe.material = new Cesium.Material({
+            fabric : {
+                source: shader,
+                uniforms: {
+                    spacing: viewModel.spacing,
+                    image: '../../SampleData/iron_gradient.png'
+                }
+            }
+        });
+    }
+}, {
+    text : 'Elevation Contour Material',
+    onselect : function() {
+        viewer.scene.globe.material = Cesium.Material.fromType('ElevationContour');
+    }
+}, {
+    text : 'Slope Color Ramp Material',
+    onselect : function() {
+        viewer.scene.globe.material = Cesium.Material.fromType('SlopeRamp');
+    }
+}, {
+    text : 'Slope Shading Material',
+    onselect : function() {
+        viewer.scene.globe.material = Cesium.Material.fromType('Slope');
+    }
+}], 'materialMenu');
+
+Cesium.knockout.getObservable(viewModel, 'spacing').subscribe(
+    function(newValue) {
+        if (viewer.scene.globe.material) {
+            viewer.scene.globe.material.uniforms.spacing = parseFloat(newValue);
+        }
+    }
+);
 
 //Sandcastle_End
     Sandcastle.finishedLoading();

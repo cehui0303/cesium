@@ -313,12 +313,6 @@ define([
                 return this._material;
             },
             set: function(material) {
-                //>>includeStart('debug', pragmas.debug);
-                if (!defined(material)) {
-                    throw new DeveloperError('material is required.');
-                }
-                //>>includeEnd('debug');
-
                 if (this._material !== material) {
                     this._material = material;
                     this.dirtyShaders();
