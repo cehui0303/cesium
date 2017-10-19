@@ -199,6 +199,7 @@ define([
             return '\n';
         });
 
+/*
         var uniforms = new Set();
         combinedSources = combinedSources.replace(/uniform.*\n/gm, function(match) {
             // Extract uniforms to put at the top
@@ -218,6 +219,7 @@ define([
             // are not off by one.
             return '\n';
         });
+        */
 
         // Remove precision qualifier
         combinedSources = combinedSources.replace(/precision\s(lowp|mediump|highp)\s(float|int);/, '');
@@ -262,6 +264,7 @@ define([
             }
         }
 
+/*
         // Prepend uniforms for uber-shaders
         for (let uniform of uniforms.values()) {
             result += uniform + "\n";
@@ -271,6 +274,7 @@ define([
         for (let varying of varyings.values()) {
             result += varying + "\n";
         }
+        */
 
         // GLSLModernizer inserts its own layout qualifiers
         // at this position in the source

@@ -22,4 +22,6 @@ struct czm_materialInput
 
     // Testing chaining materials together.
     vec3 diffuse;
+    float height;
+    float slope;
 };

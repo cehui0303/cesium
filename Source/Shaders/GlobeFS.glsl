@@ -57,9 +57,8 @@ varying vec3 v_positionEC;
 varying vec3 v_textureCoordinates;
 varying vec3 v_normalMC;
 varying vec3 v_normalEC;
-// Moved to
-//varying float v_slope;
-//varying float v_height;
+varying float v_slope;
+varying float v_height;
 
 #ifdef FOG
 varying float v_distance;
@@ -196,6 +195,8 @@ PRELIGHTING
     materialInput.st = v_textureCoordinates.st;
     //materialInput.normalEC = normalize(v_normalEC);
     materialInput.diffuse = color.xyz;
+    materialInput.slope = v_slope;
+    materialInput.height = v_height;
     //materialInput.positionToEyeEC = v_positionEC;
     /*
     // todo
