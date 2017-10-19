@@ -12,10 +12,11 @@ define([
         SceneMode) {
     'use strict';
 
-    function GlobeSurfaceShader(numberOfDayTextures, flags, shaderProgram) {
+    function GlobeSurfaceShader(numberOfDayTextures, flags, material, shaderProgram) {
         this.numberOfDayTextures = numberOfDayTextures;
         this.flags = flags;
         this.shaderProgram = shaderProgram;
+        this.material = material;
     }
 
     /**
@@ -33,6 +34,8 @@ define([
 
         this._shadersByTexturesFlags = [];
         this._pickShaderPrograms = [];
+
+        this.material = undefined;
     }
 
     function getPositionMode(sceneMode) {
@@ -93,10 +96,10 @@ define([
                     (applySplit << 15);
 
         var surfaceShader = surfaceTile.surfaceShader;
-        surfaceShader = undefined;
         if (defined(surfaceShader) &&
             surfaceShader.numberOfDayTextures === numberOfDayTextures &&
-            surfaceShader.flags === flags) {
+            surfaceShader.flags === flags &&
+            surfaceShader.material === this.material) {
 
             return surfaceShader.shaderProgram;
         }
@@ -108,8 +111,7 @@ define([
         }
 
         surfaceShader = shadersByFlags[flags];
-        surfaceShader = undefined;
-        if (!defined(surfaceShader)) {
+        if (!defined(surfaceShader) || surfaceShader.material !== this.material) {
             // Cache miss - we've never seen this combination of numberOfDayTextures and flags before.
             var vs = this.baseVertexShaderSource.clone();
             var fs = this.baseFragmentShaderSource.clone();
@@ -216,7 +218,7 @@ define([
                 attributeLocations : terrainEncoding.getAttributeLocations()
             });
 
-            surfaceShader = shadersByFlags[flags] = new GlobeSurfaceShader(numberOfDayTextures, flags, shader);
+            surfaceShader = shadersByFlags[flags] = new GlobeSurfaceShader(numberOfDayTextures, flags, this.material, shader);
         }
 
         surfaceTile.surfaceShader = surfaceShader;

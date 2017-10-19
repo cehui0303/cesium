@@ -638,6 +638,7 @@ define([
             sources : fragmentSources,
             defines: fragmentDefines
         });
+        this._surfaceShaderSet.material = this._material;
     };
 
     return Globe;
