@@ -32,6 +32,7 @@ define([
         '../Shaders/Materials/StripeMaterial',
         '../Shaders/Materials/Water',
         '../Shaders/Materials/ElevationContourMaterial',
+        '../Shaders/Materials/ElevationRampMaterial',
         '../Shaders/Materials/SlopeMaterial',
         '../Shaders/Materials/SlopeRampMaterial',
         '../ThirdParty/when'
@@ -69,6 +70,7 @@ define([
         StripeMaterial,
         WaterMaterial,
         ElevationContourMaterial,
+        ElevationRampMaterial,
         SlopeMaterial,
         SlopeRampMaterial,
         when) {
@@ -1490,6 +1492,23 @@ define([
                 spacing: 100.0
             },
             source : ElevationContourMaterial
+        },
+        translucent : false
+    });
+
+    /**
+     * Gets the name of the elevation ramp material
+     * @type {String}
+     * @readonly
+     */
+    Material.ElevationRampType = 'ElevationRamp';
+    Material._materialCache.addMaterial(Material.ElevationRampType, {
+        fabric : {
+            type : Material.ElevationRampType,
+            uniforms : {
+                image : Material.DefaultImageId
+            },
+            source : ElevationRampMaterial
         },
         translucent : false
     });
