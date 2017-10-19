@@ -60,6 +60,29 @@ var viewModel = {
     spacing: 100.0
 };
 
+function getColorRamp() {
+    var ramp = document.createElement('canvas');
+    ramp.width = 100;
+    ramp.height = 1;
+    var ctx = ramp.getContext('2d');
+
+    var grd = ctx.createLinearGradient(0, 0, 100, 0);
+    grd.addColorStop(0, "black");
+
+    grd.addColorStop(0.25, "red");
+
+    grd.addColorStop(0.5, "blue");
+
+    grd.addColorStop(0.75, "green");
+
+    grd.addColorStop(1.0, "white");
+
+
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, 100, 1);
+    return ramp;
+}
+
 // Convert the viewModel members into knockout observables.
 Cesium.knockout.track(viewModel);
 
@@ -156,7 +179,7 @@ Sandcastle.addToolbarMenu([{
     text : 'Elevation Color Ramp Material',
     onselect : function() {
         viewer.scene.globe.material = Cesium.Material.fromType('ElevationRamp');
-        viewer.scene.globe.material.uniforms.image = '../../SampleData/iron_gradient.png';
+        viewer.scene.globe.material.uniforms.image = getColorRamp();
     }
 }, {
     text : 'Elevation Contour Material',

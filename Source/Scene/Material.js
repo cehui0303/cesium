@@ -1506,7 +1506,9 @@ define([
         fabric : {
             type : Material.ElevationRampType,
             uniforms : {
-                image : Material.DefaultImageId
+                image : Material.DefaultImageId,
+                minHeight: 0.0,
+                maxHeight: 9000.0
             },
             source : ElevationRampMaterial
         },
