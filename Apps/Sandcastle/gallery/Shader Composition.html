@@ -185,6 +185,7 @@ Sandcastle.addToolbarMenu([{
     text : 'Elevation Contour Material',
     onselect : function() {
         viewer.scene.globe.material = Cesium.Material.fromType('ElevationContour');
+        viewer.scene.globe.material.uniforms.color = Cesium.Color.RED;
     }
 }, {
     text : 'Slope Color Ramp Material',

@@ -1489,7 +1489,8 @@ define([
         fabric : {
             type : Material.ElevationContourType,
             uniforms : {
-                spacing: 100.0
+                spacing: 100.0,
+                color: new Color(1.0, 0.0, 0.0, 1.0)
             },
             source : ElevationContourMaterial
         },
