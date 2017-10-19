@@ -193,18 +193,12 @@ PRELIGHTING
 #ifdef APPLY_MATERIAL
     czm_materialInput materialInput;
     materialInput.st = v_textureCoordinates.st;
-    //materialInput.normalEC = normalize(v_normalEC);
+    materialInput.normalEC = normalize(v_normalEC);
     materialInput.diffuse = color.xyz;
     materialInput.slope = v_slope;
     materialInput.height = v_height;
-    //materialInput.positionToEyeEC = v_positionEC;
-    /*
-    // todo
-        materialInput.tangentToEyeMatrix = tangentToEyeMatrix;
-        */
     czm_material material = czm_getMaterial(materialInput);
-    color.xyz = material.diffuse;
-    color.a = material.alpha;
+    color.xyz = mix(color.xyz, material.diffuse, material.alpha);
 #endif
 
 #ifdef ENABLE_VERTEX_LIGHTING
