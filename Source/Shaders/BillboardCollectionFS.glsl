@@ -12,6 +12,9 @@ varying vec4 v_pickColor;
 varying vec4 v_color;
 #endif
 
+//const float smoothing = 1.0/16.0;
+const float smoothing = 1.0/16.0;
+
 void main()
 {
 #ifdef RENDER_FOR_PICK
@@ -20,7 +23,25 @@ void main()
     vec4 vertexColor = v_color;
 #endif
 
-    vec4 color = texture2D(u_atlas, v_textureCoordinates) * vertexColor;
+    //vec4 color = texture2D(u_atlas, v_textureCoordinates) * vertexColor;
+    vec4 color = texture2D(u_atlas, v_textureCoordinates);
+
+    // SDF
+    /*
+    float distance = color.a;
+    float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, distance);
+    color = vec4(color.rgb * vertexColor.rgb, alpha);
+    */
+
+    // sdf withoutline
+    vec4 outlineColor = vec4(1.0, 0.0, 0.0, 1.0);
+    float outlineDistance = 0.6;
+    float distance = color.a;
+    float outlineFactor = smoothstep(0.5 - smoothing, 0.5 + smoothing, distance);
+    vec4 finalColor = mix(outlineColor, vertexColor, outlineFactor);
+    float alpha = smoothstep(outlineDistance - smoothing, outlineDistance + smoothing, distance);
+    color = vec4(finalColor.rgb, alpha);
+
 
 // Fully transparent parts of the billboard are not pickable.
 #if defined(RENDER_FOR_PICK) || (!defined(OPAQUE) && !defined(TRANSLUCENT))
