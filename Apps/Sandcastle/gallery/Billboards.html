@@ -34,6 +34,21 @@ var font = new Cesium.BitmapFont({
     path: '../../SampleData/fonts/calibri.json'
 });
 
+var text = "Jason is PreTTy CooL";
+
+
+function addLabel() {
+    Sandcastle.declare(addLabel);
+    viewer.entities.add({
+        position : Cesium.Cartesian3.fromDegrees(-75.1641667, 39.9522222),
+        label : {
+            text : text,
+            scale: 4.0,
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT
+        }
+    });
+}
+
 function addMarkerBillboards() {
     Sandcastle.declare(addMarkerBillboards);
 
@@ -110,9 +125,9 @@ function drawLabelGood(label) {
 
 function drawLabelScaled(label) {
     var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
-    var position = Cesium.Cartesian3.fromDegrees(-79.0, 35.0);
+    var position = Cesium.Cartesian3.fromDegrees(-75.1641667, 40.0);
 
-    var scale = 4;
+    var scale = 1;
 
     var cursor = 0;
     for (var i = 0; i < label.length; i++) {
@@ -150,8 +165,8 @@ function drawLabelScaled(label) {
 
 
 font.load(function() {
-    //addMarkerBillboards();
-    drawLabelScaled("Jason is PreTTy CooL");
+    //addLabel();
+    drawLabelScaled(text);
 });
 
 

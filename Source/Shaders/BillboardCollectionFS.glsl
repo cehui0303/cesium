@@ -8,6 +8,8 @@ varying vec2 v_textureCoordinates;
 varying vec4 v_pickColor;
 varying vec4 v_color;
 
+const float smoothing = 1.0/16.0;
+
 #ifdef FRAGMENT_DEPTH_CHECK
 varying vec4 v_textureCoordinateBounds;                  // the min and max x and y values for the texture coordinates
 varying vec4 v_originTextureCoordinateAndTranslate;      // texture coordinate at the origin, billboard translate (used for label glyphs)
@@ -50,7 +52,37 @@ float getGlobeDepth(vec2 adjustedST, vec2 depthLookupST, bool applyTranslate, ve
 
 void main()
 {
+
+
     vec4 color = texture2D(u_atlas, v_textureCoordinates) * v_color;
+
+
+#if 1
+    // https://github.com/libgdx/libgdx/wiki/Distance-field-fonts
+    color = texture2D(u_atlas, v_textureCoordinates);
+
+    // SDF
+
+    float distance = color.a;
+    float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, distance);
+    color = vec4(v_color.rgb, alpha);
+
+/*
+    // sdf withoutline
+    vec4 outlineColor = vec4(1.0, 0.0, 0.0, 1.0);
+    // Between 0 and 0.5.  0 is thick, 0.5 is thin.
+    float outlineDistance = 0.04;
+    float distance = color.a;
+    float outlineFactor = smoothstep(0.5 - smoothing, 0.5 + smoothing, distance);
+    vec4 finalColor = mix(outlineColor, v_color, outlineFactor);
+    float alpha = smoothstep(outlineDistance - smoothing, outlineDistance + smoothing, distance);
+    color = vec4(finalColor.rgb, alpha);
+    */
+
+    float gamma = 9.0;
+    vec3 gammaVec = vec3(1.0 / gamma, 1.0 / gamma, 1.0/ gamma);
+    color.rgb = pow(color.rgb, gammaVec);
+#endif
 
 // Fully transparent parts of the billboard are not pickable.
 #if !defined(OPAQUE) && !defined(TRANSLUCENT)
