@@ -235,6 +235,10 @@ function computeCirclularFlight(lon, lat, radius) {
 var circularPosition = computeCirclularFlight(-112.110693, 36.0994841, 0.03);
 var staticPosition = Cesium.Cartesian3.fromDegrees(-112.110693, 36.0994841, 1000);
 
+var heading = 0.0;
+var pitch = 0.0;
+var roll = 0.0;
+
 var entity = viewer.entities.add({
 
     //Set the entity availability to the same interval as the simulation time.
@@ -249,8 +253,13 @@ var entity = viewer.entities.add({
         minimumPixelSize : 64
     },
 
-    position : staticPosition
-});
+    position : staticPosition,
+    orientation: new Cesium.CallbackProperty(function() {
+        roll += 0.1;
+        hpr = Cesium.HeadingPitchRoll.fromDegrees(heading, pitch, roll, hpr);
+        return Cesium.Quaternion.fromHeadingPitchRoll(hpr);
+    }, false
+)});
 viewer.trackedEntity = entity;
 
 var scene = viewer.scene;
@@ -373,11 +382,11 @@ Cesium.knockout.getObservable(viewModel, 'fly').subscribe(
         if (newValue) {
             entity.position = circularPosition;
             //Automatically compute orientation based on position movement.
-            entity.orientation = new Cesium.VelocityOrientationProperty(circularPosition);
+            //entity.orientation = new Cesium.VelocityOrientationProperty(circularPosition);
         }
         else {
             entity.position = staticPosition;
-            entity.orientation = undefined;
+            //entity.orientation = undefined;
         }
     }
 );

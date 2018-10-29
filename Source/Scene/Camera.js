@@ -1749,6 +1749,16 @@ define([
         this._adjustOrthographicFrustum(false);
     };
 
+    Camera.prototype.rotateByQuaternion = function(quaternion) {
+        var rotation = Matrix3.fromQuaternion(quaternion, rotateScratchMatrix);
+        Matrix3.multiplyByVector(rotation, this.position, this.position);
+        Matrix3.multiplyByVector(rotation, this.direction, this.direction);
+        Matrix3.multiplyByVector(rotation, this.up, this.up);
+        Cartesian3.cross(this.direction, this.up, this.right);
+        Cartesian3.cross(this.right, this.direction, this.up);
+        this._adjustOrthographicFrustum(false);
+    }
+
     /**
      * Rotates the camera around the center of the camera's reference frame by angle downwards.
      *

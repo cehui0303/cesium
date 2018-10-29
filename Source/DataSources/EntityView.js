@@ -10,6 +10,7 @@ define([
         '../Core/Math',
         '../Core/Matrix3',
         '../Core/Matrix4',
+        '../Core/Quaternion',
         '../Core/Transforms',
         '../Scene/SceneMode'
     ], function(
@@ -24,6 +25,7 @@ define([
         CesiumMath,
         Matrix3,
         Matrix4,
+        Quaternion,
         Transforms,
         SceneMode) {
     'use strict';
@@ -41,10 +43,11 @@ define([
     var deltaTime = new JulianDate();
     var northUpAxisFactor = 1.25;  // times ellipsoid's maximum radius
 
-    function updateTransform(that, camera, updateLookAt, saveCamera, positionProperty, time, ellipsoid) {
+    function updateTransform(that, camera, updateLookAt, saveCamera, positionProperty, orientationProperty, time, ellipsoid) {
         var mode = that.scene.mode;
         var cartesian = positionProperty.getValue(time, that._lastCartesian);
-        if (defined(cartesian)) {
+        var orientation = orientationProperty.getValue(time, scratchOrientation);
+        if (defined(cartesian) && defined(orientation)) {
             var hasBasis = false;
             var invertVelocity = false;
             var xBasis;
@@ -179,6 +182,10 @@ define([
                 Transforms.eastNorthUpToFixedFrame(cartesian, ellipsoid, transform);
             }
 
+            var rotation = Matrix3.fromQuaternion(orientation);
+            Matrix4.multiplyByMatrix3(transform, rotation, transform);
+            //transform = transform.rotateByQuaternion(orientation);
+
             camera._setTransform(transform);
 
             if (saveCamera) {
@@ -267,6 +274,7 @@ define([
 
     var scratchHeadingPitchRange = new HeadingPitchRange();
     var scratchCartesian = new Cartesian3();
+    var scratchOrientation = new Quaternion();
 
     /**
      * Should be called each animation frame to update the camera
@@ -294,6 +302,12 @@ define([
         var objectChanged = entity !== this._lastEntity;
         var sceneModeChanged = sceneMode !== this._mode;
 
+        var orientationProperty = entity.orientation;
+        var orientation = Quaternion.clone(Quaternion.IDENTITY, scratchOrientation);
+        if (defined(orientationProperty)) {
+            orientation = orientationProperty.getValue(time, orientation);
+        }
+
         var camera = scene.camera;
 
         var updateLookAt = objectChanged || sceneModeChanged;
@@ -316,6 +330,7 @@ define([
                 }
 
                 camera.viewBoundingSphere(boundingSphere, scratchHeadingPitchRange);
+                camera.rotateByQuaternion(orientation);
                 this.boundingSphere = boundingSphere;
                 updateLookAt = false;
                 saveCamera = false;
@@ -329,7 +344,7 @@ define([
         this._lastEntity = entity;
         this._mode = sceneMode;
 
-        updateTransform(this, camera, updateLookAt, saveCamera, positionProperty, time, ellipsoid);
+        updateTransform(this, camera, updateLookAt, saveCamera, positionProperty, orientationProperty, time, ellipsoid);
     };
 
     return EntityView;
