@@ -35,13 +35,13 @@ define([
         '../Renderer/Pass',
         '../Renderer/RenderState',
         '../Renderer/VertexArray',
-        '../Scene/BlendingState',
-        '../Scene/DepthFunction',
-        '../Scene/PerInstanceColorAppearance',
-        '../Scene/Primitive',
+        './BlendingState',
         './ClippingPlaneCollection',
+        './DepthFunction',
         './GlobeSurfaceTile',
         './ImageryLayer',
+        './PerInstanceColorAppearance',
+        './Primitive',
         './QuadtreeTileLoadState',
         './SceneMode',
         './ShadowMode'
@@ -83,12 +83,12 @@ define([
         RenderState,
         VertexArray,
         BlendingState,
-        DepthFunction,
-        PerInstanceColorAppearance,
-        Primitive,
         ClippingPlaneCollection,
+        DepthFunction,
         GlobeSurfaceTile,
         ImageryLayer,
+        PerInstanceColorAppearance,
+        Primitive,
         QuadtreeTileLoadState,
         SceneMode,
         ShadowMode) {
@@ -1564,6 +1564,7 @@ define([
                 command.orientedBoundingBox = OrientedBoundingBox.clone(surfaceTile.orientedBoundingBox, orientedBoundingBox);
             }
 
+            command.dirty = true;
             frameState.commandList.push(command);
 
             renderState = otherPassesRenderState;

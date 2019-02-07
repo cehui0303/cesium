@@ -38,7 +38,8 @@ define([
         './getClipAndStyleCode',
         './getClippingFunction',
         './SceneMode',
-        './ShadowMode'
+        './ShadowMode',
+        './StencilConstants'
     ], function(
         arraySlice,
         BoundingSphere,
@@ -79,7 +80,8 @@ define([
         getClipAndStyleCode,
         getClippingFunction,
         SceneMode,
-        ShadowMode) {
+        ShadowMode,
+        StencilConstants) {
     'use strict';
 
     // Bail out if the browser doesn't support typed arrays, to prevent the setup function
@@ -188,7 +190,7 @@ define([
         // If defined, use this matrix to position the clipping planes instead of the modelMatrix.
         // This is so that when point clouds are part of a tileset they all get clipped relative
         // to the root tile.
-        this.clippingPlaneOffsetMatrix = undefined;
+        this.clippingPlanesOriginMatrix = undefined;
 
         this.attenuation = false;
         this._attenuation = false;
@@ -737,11 +739,18 @@ define([
             attributes : attributes
         });
 
-        pointCloud._opaqueRenderState = RenderState.fromCache({
+        var opaqueRenderState = {
             depthTest : {
                 enabled : true
             }
-        });
+        };
+
+        if (pointCloud._opaquePass === Pass.CESIUM_3D_TILE) {
+            opaqueRenderState.stencilTest = StencilConstants.setCesium3DTileBit();
+            opaqueRenderState.stencilMask = StencilConstants.CESIUM_3D_TILE_MASK;
+        }
+
+        pointCloud._opaqueRenderState = RenderState.fromCache(opaqueRenderState);
 
         pointCloud._translucentRenderState = RenderState.fromCache({
             depthTest : {
@@ -824,8 +833,8 @@ define([
                     return Matrix4.IDENTITY;
                 }
 
-                var clippingPlaneOffsetMatrix = defaultValue(pointCloud.clippingPlaneOffsetMatrix, pointCloud._modelMatrix);
-                Matrix4.multiply(context.uniformState.view3D, clippingPlaneOffsetMatrix, scratchClippingPlaneMatrix);
+                var clippingPlanesOriginMatrix = defaultValue(pointCloud.clippingPlanesOriginMatrix, pointCloud._modelMatrix);
+                Matrix4.multiply(context.uniformState.view3D, clippingPlanesOriginMatrix, scratchClippingPlaneMatrix);
                 return Matrix4.multiply(scratchClippingPlaneMatrix, clippingPlanes.modelMatrix, scratchClippingPlaneMatrix);
             }
         };
@@ -1189,7 +1198,7 @@ define([
 
         fs +=  'void main() \n' +
                '{ \n' +
-               '    gl_FragColor = v_color; \n';
+               '    gl_FragColor = czm_gammaCorrect(v_color); \n';
 
         if (hasClippedContent) {
             fs += getClipAndStyleCode('u_clippingPlanes', 'u_clippingPlanesMatrix', 'u_clippingPlanesEdgeStyle');
