@@ -45,7 +45,7 @@ define([
             that.loading = false;
             callback(that);
         });
-    }
+    };
 
     BitmapFont.prototype.getBounds = function(char) {
         for (var i = 0; i < this.chars.length; i++) {
@@ -54,7 +54,7 @@ define([
             }
         }
         return undefined;
-    }
+    };
 
     BitmapFont.prototype.getCharInfo = function(char) {
         for (var i = 0; i < this.chars.length; i++) {
@@ -63,7 +63,7 @@ define([
             }
         }
         return undefined;
-    }
+    };
 
     BitmapFont.prototype.getKerning = function(first, second) {
         for (var i = 0; i < this.kernings.length; i++) {
@@ -72,7 +72,7 @@ define([
             }
         }
         return undefined;
-    }
+    };
 
     BitmapFont.prototype.init = function(data) {
         this.pages = data.pages;
@@ -81,7 +81,7 @@ define([
         this.common = data.common;
         this.distanceField = data.distanceField;
         this.kernings = data.kernings;
-    }
+    };
 
     return BitmapFont;
 });
