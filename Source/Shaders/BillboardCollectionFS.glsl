@@ -4,6 +4,12 @@ uniform sampler2D u_atlas;
 uniform vec4 u_highlightColor;
 #endif
 
+#ifdef SDF
+uniform float u_sdfEdge;
+uniform float u_sdfOutlineWidth;
+uniform vec4 u_sdfOutlineColor;
+#endif
+
 varying vec2 v_textureCoordinates;
 varying vec4 v_pickColor;
 varying vec4 v_color;
@@ -56,70 +62,28 @@ void main()
     color = czm_gammaCorrect(color);
     color *= czm_gammaCorrect(v_color);
 
-    //color = vec4(1.0, 0.0, 0.0, 1.0);
-
-
-
-#if 1
+#ifdef SDF
     // https://github.com/libgdx/libgdx/wiki/Distance-field-fonts
-    //color = texture2D(u_atlas, v_textureCoordinates);
-
-    // hiero default setting
-    //float edge = 0.5;
-    // tinysdf default setting.
-    float edge = 0.75;
-
     vec4 outlineColor = vec4(1.0, 0.0, 0.0, 1.0);
 
-    // Regular SDF
-    float outlineEdge = 0.70;
     float distance = color.a;
-    float alpha = smoothstep(edge - smoothing, edge + smoothing, distance);
-    color = vec4(v_color.rgb, alpha);
+
+    // Regular SDF
     /*
-    if (distance < edge && distance > outlineEdge)
-    {
-        color = outlineColor;
-        float outlineAlpha = smoothstep(outlineEdge - smoothing, outlineEdge + smoothing, distance);
-        color.a = outlineAlpha;
-    }
-    */
-
-// Simple edge highlighting
-/*
-    if (color.a > edge)
-    {
-        color.rgb = vec3(1.0, 0.0, 0.0);
-
-    }
-    else
-    {
-        color.rgb = vec3(0.0, 1.0, 0.0);
-    }
-    color.a = 1.0;
+    float alpha = smoothstep(u_sdfEdge - smoothing, u_sdfEdge + smoothing, distance);
+    color = vec4(v_color.rgb, alpha);
     */
 
     // sdf with outline
-    /*
-    float distance = color.a;
-    // Between 0 and 0.5.  0 is thick, 0.5 is thin.
-    float outlineDistance = 0.7;
-    float outlineFactor = smoothstep(edge - smoothing, edge + smoothing, distance);
-    vec4 finalColor = mix(outlineColor, v_color, outlineFactor);
-    float alpha = smoothstep(outlineDistance - smoothing, outlineDistance + smoothing, distance);
-    color = vec4(finalColor.rgb, alpha);
-    */
-
-
+    float outlineFactor = smoothstep(u_sdfEdge - smoothing, u_sdfEdge + smoothing, distance);
+    vec4 finalColor = mix(u_sdfOutlineColor, v_color, outlineFactor);
+    float alpha = smoothstep(u_sdfOutlineWidth - smoothing, u_sdfOutlineWidth + smoothing, distance);
+    color = vec4(finalColor.rgb, finalColor.a * alpha);
 /*
     float gamma = 9.0;
     vec3 gammaVec = vec3(1.0 / gamma, 1.0 / gamma, 1.0/ gamma);
     color.rgb = pow(color.rgb, gammaVec);
     */
-
-    // Show the sdf values
-    //color = texture2D(u_atlas, v_textureCoordinates);
-    //color = vec4(color.a, color.a, color.a, 1.0);
 #endif
 
 // Fully transparent parts of the billboard are not pickable.

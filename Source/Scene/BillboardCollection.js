@@ -216,6 +216,9 @@ define([
         this._shaderClampToGround = false;
         this._compiledShaderClampToGround = false;
 
+        this._sdf = false;
+        this._compiledSDF = false;
+
         this._propertiesChanged = new Uint32Array(NUMBER_OF_PROPERTIES);
 
         this._maxSize = 0.0;
@@ -315,6 +318,9 @@ define([
         ];
 
         this._highlightColor = Color.clone(Color.WHITE); // Only used by Vector3DTilePoints
+        this._sdfEdge = defaultValue(options.sdfEdge, 0.5);
+        this._sdfOutlineWidth = defaultValue(options.sdfOutlineWidth, 0.0);
+        this._sdfOutlineColor = Color.clone(Color.RED);
 
         var that = this;
         this._uniforms = {
@@ -323,6 +329,15 @@ define([
             },
             u_highlightColor : function() {
                 return that._highlightColor;
+            },
+            u_sdfEdge: function() {
+                return that._sdfEdge;
+            },
+            u_sdfOutlineWidth: function() {
+                return that._sdfOutlineWidth;
+            },
+            u_sdfOutlineColor: function() {
+                return that._sdfOutlineColor;
             }
         };
 
@@ -1667,7 +1682,8 @@ define([
             (this._shaderPixelOffsetScaleByDistance !== this._compiledShaderPixelOffsetScaleByDistance) ||
             (this._shaderDistanceDisplayCondition !== this._compiledShaderDistanceDisplayCondition) ||
             (this._shaderDisableDepthDistance !== this._compiledShaderDisableDepthDistance) ||
-            (this._shaderClampToGround !== this._compiledShaderClampToGround)) {
+            (this._shaderClampToGround !== this._compiledShaderClampToGround) ||
+            (this._sdf !== this._compiledSDF)) {
 
             vsSource = BillboardCollectionVS;
             fsSource = BillboardCollectionFS;
@@ -1729,6 +1745,11 @@ define([
                         fs.defines.push('FRAGMENT_DEPTH_CHECK');
                     }
                 }
+
+                if (this._sdf) {
+                    fs.defines.push('SDF');
+                }
+
                 this._sp = ShaderProgram.replaceCache({
                     context : context,
                     shaderProgram : this._sp,
@@ -1748,6 +1769,11 @@ define([
                         fs.defines.push('FRAGMENT_DEPTH_CHECK');
                     }
                 }
+
+                if (this._sdf) {
+                    fs.defines.push('SDF');
+                }
+
                 this._spTranslucent = ShaderProgram.replaceCache({
                     context : context,
                     shaderProgram : this._spTranslucent,
@@ -1769,6 +1795,11 @@ define([
                         fs.defines.push('FRAGMENT_DEPTH_CHECK');
                     }
                 }
+
+                if (this._sdf) {
+                    fs.defines.push('SDF');
+                }
+
                 this._sp = ShaderProgram.replaceCache({
                     context : context,
                     shaderProgram : this._sp,
@@ -1790,6 +1821,11 @@ define([
                         fs.defines.push('FRAGMENT_DEPTH_CHECK');
                     }
                 }
+
+                if (this._sdf) {
+                    fs.defines.push('SDF');
+                }
+
                 this._spTranslucent = ShaderProgram.replaceCache({
                     context : context,
                     shaderProgram : this._spTranslucent,
@@ -1807,6 +1843,7 @@ define([
             this._compiledShaderDistanceDisplayCondition = this._shaderDistanceDisplayCondition;
             this._compiledShaderDisableDepthDistance = this._shaderDisableDepthDistance;
             this._compiledShaderClampToGround = this._shaderClampToGround;
+            this._compiledSDF = this._sdf;
         }
 
         var commandList = frameState.commandList;

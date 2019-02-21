@@ -22,45 +22,64 @@
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
-<div id="toolbar"></div>
+<div id="toolbar">
+        <table><tbody>
+            <tr>
+                <td>SDF Edge</td>
+                <td>
+                    <input type="range" min="-1.0" max="1.0" step="0.01" data-bind="value: sdfEdge, valueUpdate: 'input'">
+                    <input type="text" size="5" data-bind="value: sdfEdge">
+                </td>
+            </tr>
+
+            <tr>
+                <td>SDF Outline</td>
+                <td>
+                    <input type="range" min="0.0" max="1.0" step="0.01" data-bind="value: sdfOutlineWidth, valueUpdate: 'input'">
+                    <input type="text" size="5" data-bind="value: sdfOutlineWidth">
+                </td>
+            </tr>
+
+            <tr>
+                <td class="header">SDF Outline Color</td>
+            </tr>
+            <tr>
+                <td>Color</td>
+                <td><select data-bind="options: sdfOutlineColors, value: sdfOutlineColor"></select></td>
+            </tr>
+
+        </tbody>
+</div>
 <script id="cesium_sandcastle_script">
 function startup(Cesium) {
     'use strict';
 //Sandcastle_Begin
+function getColor(colorName, alpha) {
+    var color = Cesium.Color[colorName.toUpperCase()];
+    return Cesium.Color.fromAlpha(color, parseFloat(alpha));
+}
+
 var viewer = new Cesium.Viewer('cesiumContainer');
 
+// The viewModel tracks the state of our mini application.
+var viewModel = {
+    sdfEdge: 0.5,
+    sdfOutlineWidth: 0.0,
+    sdfOutlineColor : 'Red',
+    sdfOutlineColors : ['Red', 'Green', 'Blue', 'Yellow', 'Gray', 'Black'],
+};
+
+// Convert the viewModel members into knockout observables.
+Cesium.knockout.track(viewModel);
+// Bind the viewModel to the DOM elements of the UI that call for it.
+var toolbar = document.getElementById('toolbar');
+Cesium.knockout.applyBindings(viewModel, toolbar);
 
 var font = new Cesium.BitmapFont({
     path: '../../SampleData/fonts/calibri.json'
 });
 
 var text = "Jason is PreTTy CooL";
-
-
-function addLabel() {
-    Sandcastle.declare(addLabel);
-    viewer.entities.add({
-        position : Cesium.Cartesian3.fromDegrees(-75.1641667, 39.9522222),
-        label : {
-            text : text,
-            scale: 4.0,
-            horizontalOrigin: Cesium.HorizontalOrigin.LEFT
-        }
-    });
-}
-
-function addMarkerBillboards() {
-    Sandcastle.declare(addMarkerBillboards);
-
-    viewer.entities.add({
-        position : Cesium.Cartesian3.fromDegrees(-79.0, 35.0),
-        billboard : {
-            image : '../../SampleData/fonts/calibri.png',
-            imageSubRegion : font.getBounds("A"),//new Cesium.BoundingRectangle(105, 105, 18, 18),
-            color : Cesium.Color.YELLOW
-        }
-    });
-}
 
 var offset = new Cesium.Cartesian2();
 
@@ -123,11 +142,13 @@ function drawLabelGood(label) {
     }
 }
 
+var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
+billboards._sdfEdge = viewModel.sdfEdge
+
 function drawLabelScaled(label) {
-    var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
     var position = Cesium.Cartesian3.fromDegrees(-75.1641667, 40.0);
 
-    var scale = 1;
+    var scale = 8;
 
     var cursor = 0;
     for (var i = 0; i < label.length; i++) {
@@ -169,6 +190,28 @@ font.load(function() {
     drawLabelScaled(text);
 });
 
+
+Sandcastle.addToggleButton('SDF', billboards._sdf, function(checked) {
+    billboards._sdf = checked;
+});
+
+Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
+    function(newValue) {
+        billboards._sdfEdge = parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'sdfOutlineWidth').subscribe(
+    function(newValue) {
+        billboards._sdfOutlineWidth = parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'sdfOutlineColor').subscribe(
+    function(newValue) {
+        billboards._sdfOutlineColor = getColor(newValue, 1.0);
+    }
+);
 
 
 //Sandcastle_End
