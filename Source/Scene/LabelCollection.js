@@ -16,7 +16,9 @@ define([
         './Label',
         './LabelStyle',
         './TextureAtlas',
-        './VerticalOrigin'
+        './VerticalOrigin',
+        '../ThirdParty/bitmap-sdf',
+        '../ThirdParty/tiny-sdf'
     ], function(
         BoundingRectangle,
         Cartesian2,
@@ -35,7 +37,9 @@ define([
         Label,
         LabelStyle,
         TextureAtlas,
-        VerticalOrigin) {
+        VerticalOrigin,
+        bitmapSDF,
+        tinySDF) {
     'use strict';
 
     // A glyph represents a single character in a particular label.  It may or may
@@ -86,6 +90,7 @@ define([
         writeTextToCanvasParameters.fillColor = fillColor;
         writeTextToCanvasParameters.strokeColor = outlineColor;
         writeTextToCanvasParameters.strokeWidth = outlineWidth;
+        writeTextToCanvasParameters.padding = 10;
 
         if (verticalOrigin === VerticalOrigin.CENTER) {
             writeTextToCanvasParameters.textBaseline = 'middle';
@@ -122,6 +127,14 @@ define([
     function addGlyphToTextureAtlas(textureAtlas, id, canvas, glyphTextureInfo) {
         textureAtlas.addImage(id, canvas).then(function(index) {
             glyphTextureInfo.index = index;
+        });
+    }
+
+    function addImageDataToCanvas(imageData, textureAtlas, id, canvas, glyphTextureInfo) {
+        createImageBitmap(imageData).then(function(imgBitmap) {
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height);
+            addGlyphToTextureAtlas(textureAtlas, id, canvas, glyphTextureInfo);
         });
     }
 
@@ -214,7 +227,59 @@ define([
                 glyphTextureCache[id] = glyphTextureInfo;
 
                 if (canvas.width > 0 && canvas.height > 0) {
+
+                    // Get the canvas image data
+                    var ctx = canvas.getContext('2d');
+                    var sdf = true;
+
+                    if (sdf)
+                    {
+                        // Compute the sdf values
+                        //var sdfValues = bitmapSDF(canvas);
+                        var sdfValues = tinySDF(canvas);
+                        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        for (var i = 0; i < canvas.width; i++)
+                        {
+                            for (var j = 0; j < canvas.height; j++)
+                            {
+                                var baseIndex = (j * canvas.width + i);
+                                var alpha = sdfValues[baseIndex];
+                                imgData.data[baseIndex * 4 + 3] = alpha;
+                            }
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+                    }
+
                     addGlyphToTextureAtlas(labelCollection._textureAtlas, id, canvas, glyphTextureInfo);
+
+                    /*
+
+                    // Use tinysdf to generate a high res glyph
+                    var char = labelCollection._tinySDF.draw(character);
+                    // Create an ImageData from the array
+                    var dataWidth = labelCollection._tinySDF.size;
+                    var dataHeight = labelCollection._tinySDF.size;
+                    var imgArr = new Uint8ClampedArray(dataWidth * dataHeight * 4);
+                    for (var i = 0; i < dataWidth; i++) {
+                        for (var j = 0; j < dataHeight; j++) {
+                            imgArr[j * dataWidth * 4 + i * 4 + 0] = 255;//char[j * dataWidth + i];
+                            imgArr[j * dataWidth * 4 + i * 4 + 1] = 255;//char[j * dataWidth + i];
+                            imgArr[j * dataWidth * 4 + i * 4 + 2] = 255;//char[j * dataWidth + i];
+                            imgArr[j * dataWidth * 4 + i * 4 + 3] = char[j * dataWidth + i];
+                        }
+                    }
+                    var data = new ImageData(imgArr, dataWidth, dataHeight);
+
+                    addImageDataToCanvas(data, labelCollection._textureAtlas, id, canvas, glyphTextureInfo);
+                    */
+
+                    /*
+                    createImageBitmap(data).then(function(imgBitmap) {
+                        ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height);
+                        addGlyphToTextureAtlas(labelCollection._textureAtlas, id, canvas, glyphTextureInfo);
+                        console.log("Done " + character);
+                    });
+                    */
                 }
             }
 
