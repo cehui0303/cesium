@@ -586,6 +586,10 @@ define([
             batchTable : this._batchTable
         });
         this._billboardCollection.destroyTextureAtlas = false;
+        this._billboardCollection._sdf = true;
+        this._billboardCollection._sdfEdge = 0.75;
+        this._billboardCollection._sdfOutlineWidth = 0.74;
+
 
         this._spareBillboards = [];
         this._glyphTextureCache = {};

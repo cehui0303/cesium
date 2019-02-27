@@ -22,39 +22,115 @@
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
-<div id="toolbar"></div>
+<div id="toolbar">
+    <table><tbody>
+        <tr>
+            <td>SDF Edge</td>
+            <td>
+                <input type="range" min="-1.0" max="1.0" step="0.01" data-bind="value: sdfEdge, valueUpdate: 'input'">
+                <input type="text" size="5" data-bind="value: sdfEdge">
+            </td>
+        </tr>
+
+        <tr>
+            <td>SDF Outline</td>
+            <td>
+                <input type="range" min="0.0" max="1.0" step="0.01" data-bind="value: sdfOutlineWidth, valueUpdate: 'input'">
+                <input type="text" size="5" data-bind="value: sdfOutlineWidth">
+            </td>
+        </tr>
+
+        <tr>
+            <td>SDF Smoothing</td>
+            <td>
+                <input type="range" min="1.0" max="128.0" step="0.01" data-bind="value: sdfSmoothing, valueUpdate: 'input'">
+                <input type="text" size="5" data-bind="value: sdfSmoothing">
+            </td>
+        </tr>
+
+        <tr>
+            <td>Scale</td>
+            <td>
+                <input type="range" min="1.0" max="20.0" step="0.01" data-bind="value: scale, valueUpdate: 'input'">
+                <input type="text" size="5" data-bind="value: scale">
+            </td>
+        </tr>
+
+        <tr>
+            <td class="header">SDF Outline Color</td>
+        </tr>
+        <tr>
+            <td>Color</td>
+            <td><select data-bind="options: sdfOutlineColors, value: sdfOutlineColor"></select></td>
+        </tr>
+
+    </tbody>
+</div>
 <script id="cesium_sandcastle_script">
 function startup(Cesium) {
     'use strict';
 //Sandcastle_Begin
 var viewer = new Cesium.Viewer('cesiumContainer');
 
-function addLabel() {
-    Sandcastle.declare(addLabel);
-    viewer.entities.add({
-        position : Cesium.Cartesian3.fromDegrees(-75.1641667, 39.9522222),
-        label : {
-            text : 'Philadelphia',
-            scale: 8,
-            fillColor: Cesium.Color.WHITE,
-            backgroundColor: Cesium.Color.BLACK,
-            font : '24px Calibri'
-        }
-    });
-}
-
-
-Sandcastle.addToolbarMenu([{
-    text : 'Add label',
-    onselect : function() {
-        addLabel();
-        Sandcastle.highlight(addLabel);
-    }
-}]);
-
-Sandcastle.reset = function() {
-    viewer.entities.removeAll();
+// The viewModel tracks the state of our mini application.
+var viewModel = {
+    sdfEdge: 0.75,
+    sdfOutlineWidth: 0.75,
+    sdfSmoothing: 64.0,
+    scale: 1.0,
+    sdfOutlineColor : 'Red',
+    sdfOutlineColors : ['Red', 'Green', 'Blue', 'Yellow', 'Gray', 'Black'],
 };
+
+// Convert the viewModel members into knockout observables.
+Cesium.knockout.track(viewModel);
+// Bind the viewModel to the DOM elements of the UI that call for it.
+var toolbar = document.getElementById('toolbar');
+Cesium.knockout.applyBindings(viewModel, toolbar);
+
+
+// Create a label collection with two labels
+var labels = viewer.scene.primitives.add(new Cesium.LabelCollection());
+var label = labels.add({
+  position : Cesium.Cartesian3.fromDegrees(-75.1641667, 39.9522222),
+  text : 'Philadelpha',
+  scale: 8,
+  fillColor: Cesium.Color.WHITE,
+  backgroundColor: Cesium.Color.BLACK,
+  font : '24px Calibri'
+});
+
+
+Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
+    function(newValue) {
+        labels._billboardCollection._sdfEdge = parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'sdfOutlineWidth').subscribe(
+    function(newValue) {
+        labels._billboardCollection._sdfOutlineWidth = parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'scale').subscribe(
+    function(newValue) {
+        label.scale = parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'sdfSmoothing').subscribe(
+    function(newValue) {
+        labels._billboardCollection._sdfSmoothing = 1.0 / parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'sdfOutlineColor').subscribe(
+    function(newValue) {
+        labels._billboardCollection._sdfOutlineColor = getColor(newValue, 1.0);
+    }
+);
+
 //Sandcastle_End
     Sandcastle.finishedLoading();
 }

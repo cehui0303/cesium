@@ -8,13 +8,12 @@ uniform vec4 u_highlightColor;
 uniform float u_sdfEdge;
 uniform float u_sdfOutlineWidth;
 uniform vec4 u_sdfOutlineColor;
+uniform float u_sdfSmoothing;
 #endif
 
 varying vec2 v_textureCoordinates;
 varying vec4 v_pickColor;
 varying vec4 v_color;
-
-const float smoothing = 1.0/64.0;
 
 #ifdef FRAGMENT_DEPTH_CHECK
 varying vec4 v_textureCoordinateBounds;                  // the min and max x and y values for the texture coordinates
@@ -69,16 +68,17 @@ void main()
     float distance = color.a;
 
     // Regular SDF
-    /*
-    float alpha = smoothstep(u_sdfEdge - smoothing, u_sdfEdge + smoothing, distance);
+
+    float alpha = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
     color = vec4(v_color.rgb, alpha);
-    */
 
     // sdf with outline
-    float outlineFactor = smoothstep(u_sdfEdge - smoothing, u_sdfEdge + smoothing, distance);
+    /*
+    float outlineFactor = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
     vec4 finalColor = mix(u_sdfOutlineColor, v_color, outlineFactor);
-    float alpha = smoothstep(u_sdfOutlineWidth - smoothing, u_sdfOutlineWidth + smoothing, distance);
+    float alpha = smoothstep(u_sdfOutlineWidth - u_sdfSmoothing, u_sdfOutlineWidth + u_sdfSmoothing, distance);
     color = vec4(finalColor.rgb, finalColor.a * alpha);
+    */
 /*
     float gamma = 9.0;
     vec3 gammaVec = vec3(1.0 / gamma, 1.0 / gamma, 1.0/ gamma);

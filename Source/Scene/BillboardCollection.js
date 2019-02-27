@@ -321,6 +321,7 @@ define([
         this._sdfEdge = defaultValue(options.sdfEdge, 0.5);
         this._sdfOutlineWidth = defaultValue(options.sdfOutlineWidth, 0.0);
         this._sdfOutlineColor = Color.clone(Color.RED);
+        this._sdfSmoothing = defaultValue(options.sdfSmoothing, 1.0/64.0);
 
         var that = this;
         this._uniforms = {
@@ -338,6 +339,9 @@ define([
             },
             u_sdfOutlineColor: function() {
                 return that._sdfOutlineColor;
+            },
+            u_sdfSmoothing: function() {
+                return that._sdfSmoothing;
             }
         };
 

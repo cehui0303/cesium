@@ -41,6 +41,14 @@
             </tr>
 
             <tr>
+                <td>SDF Smoothing</td>
+                <td>
+                    <input type="range" min="1.0" max="128.0" step="0.01" data-bind="value: sdfSmoothing, valueUpdate: 'input'">
+                    <input type="text" size="5" data-bind="value: sdfSmoothing">
+                </td>
+            </tr>
+
+            <tr>
                 <td class="header">SDF Outline Color</td>
             </tr>
             <tr>
@@ -64,7 +72,8 @@ var viewer = new Cesium.Viewer('cesiumContainer');
 // The viewModel tracks the state of our mini application.
 var viewModel = {
     sdfEdge: 0.5,
-    sdfOutlineWidth: 0.0,
+    sdfOutlineWidth: 0.5,
+    sdfSmoothing: 64.0,
     sdfOutlineColor : 'Red',
     sdfOutlineColors : ['Red', 'Green', 'Blue', 'Yellow', 'Gray', 'Black'],
 };
@@ -85,6 +94,7 @@ var offset = new Cesium.Cartesian2();
 
 function drawLabel(label) {
     var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
+    billboards._sdf = true;
     var position = Cesium.Cartesian3.fromDegrees(-79.0, 35.0);
 
     var cursor = 0;
@@ -190,11 +200,6 @@ font.load(function() {
     drawLabelScaled(text);
 });
 
-
-Sandcastle.addToggleButton('SDF', billboards._sdf, function(checked) {
-    billboards._sdf = checked;
-});
-
 Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
     function(newValue) {
         billboards._sdfEdge = parseFloat(newValue);
@@ -204,6 +209,12 @@ Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
 Cesium.knockout.getObservable(viewModel, 'sdfOutlineWidth').subscribe(
     function(newValue) {
         billboards._sdfOutlineWidth = parseFloat(newValue);
+    }
+);
+
+Cesium.knockout.getObservable(viewModel, 'sdfSmoothing').subscribe(
+    function(newValue) {
+        billboards._sdfSmoothing = 1.0 / parseFloat(newValue);
     }
 );
 
