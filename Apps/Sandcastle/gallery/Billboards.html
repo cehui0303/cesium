@@ -154,6 +154,7 @@ function drawLabelGood(label) {
 
 var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
 billboards._sdfEdge = viewModel.sdfEdge
+billboards._sdf = true;
 
 function drawLabelScaled(label) {
     var position = Cesium.Cartesian3.fromDegrees(-75.1641667, 40.0);
