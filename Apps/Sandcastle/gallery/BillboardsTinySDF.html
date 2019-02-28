@@ -223,6 +223,34 @@
             return sdfCanvas;
         }
 
+        function resizeSDF(sdf, size, newSize, callback) {
+            console.log("Resizing from " + size + " to " + newSize);
+                    var dataWidth = size;
+                    var dataHeight = size;
+                    var imgArr = new Uint8ClampedArray(dataWidth * dataHeight * 4);
+                    for (var i = 0; i < dataWidth; i++) {
+                        for (var j = 0; j < dataHeight; j++) {
+                            imgArr[j * dataWidth * 4 + i * 4 + 0] = 255;//char[j * dataWidth + i];
+                            imgArr[j * dataWidth * 4 + i * 4 + 1] = 255;//char[j * dataWidth + i];
+                            imgArr[j * dataWidth * 4 + i * 4 + 2] = 255;//char[j * dataWidth + i];
+                            imgArr[j * dataWidth * 4 + i * 4 + 3] = sdf[j * dataWidth + i];
+                        }
+                    }
+                    var data = new ImageData(imgArr, dataWidth, dataHeight);
+                    createImageBitmap(data).then(function(imgBitmap) {
+                        var resizeCanvas = document.createElement('canvas');
+                        resizeCanvas.width = newSize;
+                        resizeCanvas.height = newSize;
+                        var context2D = resizeCanvas.getContext('2d');
+                        context2D.drawImage(imgBitmap, 0, 0, resizeCanvas.width, resizeCanvas.height);
+                        if (callback) {
+                            callback(resizeCanvas);
+                        }
+                    });
+        }
+
+
+
             var fontsize = 24; // Font size in pixels
             var buffer = 3;    // Whitespace buffer around a glyph in pixels
             var radius = 8;    // How many pixels around the glyph shape to use for encoding distance
@@ -241,13 +269,18 @@
             billboards._sdfEdge = viewModel.sdfEdge
             billboards._sdf = true;
 
-
             var position = Cesium.Cartesian3.fromDegrees(-75.1641667, 40.0);
-            var billboard = billboards.add({
-               position: position,
-               image : getImage(oneSDF, tinySDFGenerator.size),
-               scale: 8
+
+            //var image = getImage(oneSDF, tinySDFGenerator.size);
+            var image = resizeSDF(oneSDF, tinySDFGenerator.size, 30, function(image) {
+                var billboard = billboards.add({
+                    position: position,
+                    image : image,
+                    width: 300,
+                    height: 300
+                });
             });
+
 
             Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
                 function(newValue) {
