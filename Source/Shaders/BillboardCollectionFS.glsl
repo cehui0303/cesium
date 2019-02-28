@@ -69,21 +69,20 @@ void main()
 
     // Regular SDF
 
+    /*
     float alpha = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
     color = vec4(v_color.rgb, alpha);
+    */
 
     // sdf with outline
-    /*
     float outlineFactor = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
     vec4 finalColor = mix(u_sdfOutlineColor, v_color, outlineFactor);
     float alpha = smoothstep(u_sdfOutlineWidth - u_sdfSmoothing, u_sdfOutlineWidth + u_sdfSmoothing, distance);
     color = vec4(finalColor.rgb, finalColor.a * alpha);
-    */
-/*
+
     float gamma = 9.0;
     vec3 gammaVec = vec3(1.0 / gamma, 1.0 / gamma, 1.0/ gamma);
     color.rgb = pow(color.rgb, gammaVec);
-    */
 #endif
 
 // Fully transparent parts of the billboard are not pickable.

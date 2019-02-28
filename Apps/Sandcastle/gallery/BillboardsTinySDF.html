@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <meta name="description" content="Add billboard images and markers to the scene.">
+    <meta name="cesium-sandcastle-labels" content="Beginner, Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.20/require.js"></script>
+    <script type="text/javascript">
+        require.config({
+            baseUrl: '../../../Source',
+            waitSeconds: 60
+        });
+    </script>
+</head>
+
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+    <style>
+        @import url(../templates/bucket.css);
+    </style>
+    <div id="cesiumContainer" class="fullSize"></div>
+    <div id="loadingOverlay">
+        <h1>Loading...</h1>
+    </div>
+    <div id="toolbar">
+        <table>
+            <tbody>
+                <tr>
+                    <td>SDF Edge</td>
+                    <td>
+                        <input type="range" min="-1.0" max="1.0" step="0.01"
+                            data-bind="value: sdfEdge, valueUpdate: 'input'">
+                        <input type="text" size="5" data-bind="value: sdfEdge">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>SDF Outline</td>
+                    <td>
+                        <input type="range" min="0.0" max="1.0" step="0.01"
+                            data-bind="value: sdfOutlineWidth, valueUpdate: 'input'">
+                        <input type="text" size="5" data-bind="value: sdfOutlineWidth">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>SDF Smoothing</td>
+                    <td>
+                        <input type="range" min="1.0" max="128.0" step="0.01"
+                            data-bind="value: sdfSmoothing, valueUpdate: 'input'">
+                        <input type="text" size="5" data-bind="value: sdfSmoothing">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="header">SDF Outline Color</td>
+                </tr>
+                <tr>
+                    <td>Color</td>
+                    <td><select data-bind="options: sdfOutlineColors, value: sdfOutlineColor"></select></td>
+                </tr>
+
+            </tbody>
+    </div>
+    <script id="cesium_sandcastle_script">
+        function startup(Cesium) {
+            'use strict';
+            //Sandcastle_Begin
+            function getColor(colorName, alpha) {
+                var color = Cesium.Color[colorName.toUpperCase()];
+                return Cesium.Color.fromAlpha(color, parseFloat(alpha));
+            }
+
+            var viewer = new Cesium.Viewer('cesiumContainer');
+
+            // The viewModel tracks the state of our mini application.
+            var viewModel = {
+                sdfEdge: 0.75,
+                sdfOutlineWidth: 0.75,
+                sdfSmoothing: 64.0,
+                sdfOutlineColor: 'Red',
+                sdfOutlineColors: ['Red', 'Green', 'Blue', 'Yellow', 'Gray', 'Black'],
+            };
+
+            // Convert the viewModel members into knockout observables.
+            Cesium.knockout.track(viewModel);
+            // Bind the viewModel to the DOM elements of the UI that call for it.
+            var toolbar = document.getElementById('toolbar');
+            Cesium.knockout.applyBindings(viewModel, toolbar);
+
+            var INF = 1e20;
+
+            function TinySDF(fontSize, buffer, radius, cutoff, fontFamily, fontWeight) {
+                this.fontSize = fontSize || 24;
+                this.buffer = buffer === undefined ? 3 : buffer;
+                this.cutoff = cutoff || 0.25;
+                this.fontFamily = fontFamily || 'sans-serif';
+                this.fontWeight = fontWeight || 'normal';
+                this.radius = radius || 8;
+                var size = this.size = this.fontSize + this.buffer * 2;
+
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = this.canvas.height = size;
+
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.font = this.fontWeight + ' ' + this.fontSize + 'px ' + this.fontFamily;
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillStyle = 'black';
+
+                // temporary arrays for the distance transform
+                this.gridOuter = new Float64Array(size * size);
+                this.gridInner = new Float64Array(size * size);
+                this.f = new Float64Array(size);
+                this.d = new Float64Array(size);
+                this.z = new Float64Array(size + 1);
+                this.v = new Int16Array(size);
+
+                // hack around https://bugzilla.mozilla.org/show_bug.cgi?id=737852
+                this.middle = Math.round((size / 2) * (navigator.userAgent.indexOf('Gecko/') >= 0 ? 1.2 : 1));
+            }
+
+            TinySDF.prototype.draw = function(char) {
+                this.ctx.clearRect(0, 0, this.size, this.size);
+                this.ctx.fillText(char, this.buffer, this.middle);
+
+                var imgData = this.ctx.getImageData(0, 0, this.size, this.size);
+                var alphaChannel = new Uint8ClampedArray(this.size * this.size);
+
+                for (var i = 0; i < this.size * this.size; i++) {
+                    var a = imgData.data[i * 4 + 3] / 255; // alpha value
+                    this.gridOuter[i] = a === 1 ? 0 : a === 0 ? INF : Math.pow(Math.max(0, 0.5 - a), 2);
+                    this.gridInner[i] = a === 1 ? INF : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
+                }
+
+                edt(this.gridOuter, this.size, this.size, this.f, this.d, this.v, this.z);
+                edt(this.gridInner, this.size, this.size, this.f, this.d, this.v, this.z);
+
+                for (i = 0; i < this.size * this.size; i++) {
+                    var d = this.gridOuter[i] - this.gridInner[i];
+                    alphaChannel[i] = Math.max(0, Math.min(255, Math.round(255 - 255 * (d / this.radius + this.cutoff))));
+                }
+
+                return alphaChannel;
+            };
+
+            // 2D Euclidean distance transform by Felzenszwalb & Huttenlocher https://cs.brown.edu/~pff/papers/dt-final.pdf
+            function edt(data, width, height, f, d, v, z) {
+                for (var x = 0; x < width; x++) {
+                    for (var y = 0; y < height; y++) {
+                        f[y] = data[y * width + x];
+                    }
+                    edt1d(f, d, v, z, height);
+                    for (y = 0; y < height; y++) {
+                        data[y * width + x] = d[y];
+                    }
+                }
+                for (y = 0; y < height; y++) {
+                    for (x = 0; x < width; x++) {
+                        f[x] = data[y * width + x];
+                    }
+                    edt1d(f, d, v, z, width);
+                    for (x = 0; x < width; x++) {
+                        data[y * width + x] = Math.sqrt(d[x]);
+                    }
+                }
+            }
+
+            // 1D squared distance transform
+            function edt1d(f, d, v, z, n) {
+                v[0] = 0;
+                z[0] = -INF;
+                z[1] = +INF;
+
+                for (var q = 1, k = 0; q < n; q++) {
+                    var s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+                    while (s <= z[k]) {
+                        k--;
+                        s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+                    }
+                    k++;
+                    v[k] = q;
+                    z[k] = s;
+                    z[k + 1] = +INF;
+                }
+
+                for (q = 0, k = 0; q < n; q++) {
+                    while (z[k + 1] < q) k++;
+                    d[q] = (q - v[k]) * (q - v[k]) + f[v[k]];
+                }
+            }
+
+
+            // end sdf
+
+            var sdfCanvas;
+            function getImage(sdf, size) {
+            if (!Cesium.defined(sdfCanvas)) {
+                sdfCanvas = document.createElement('canvas');
+                sdfCanvas.width = size;
+                sdfCanvas.height = size;
+                var context2D = sdfCanvas.getContext('2d');
+
+                var imgData = context2D.getImageData(0, 0, sdfCanvas.width, sdfCanvas.height);
+                for (var i = 0; i < sdfCanvas.width; i++)
+                {
+                    for (var j = 0; j < sdfCanvas.height; j++)
+                    {
+                        var baseIndex = (j * sdfCanvas.width + i);
+                        var alpha = sdf[baseIndex];
+                        imgData.data[baseIndex * 4 + 0] = 255;
+                        imgData.data[baseIndex * 4 + 1] = 255;
+                        imgData.data[baseIndex * 4 + 2] = 255;
+                        imgData.data[baseIndex * 4 + 3] = alpha;
+                    }
+                }
+                context2D.putImageData(imgData, 0, 0);
+            }
+            return sdfCanvas;
+        }
+
+            var fontsize = 24; // Font size in pixels
+            var buffer = 3;    // Whitespace buffer around a glyph in pixels
+            var radius = 8;    // How many pixels around the glyph shape to use for encoding distance
+            var cutoff = 0.25  // How much of the radius (relative) is used for the inside part the glyph
+
+            var fontFamily = 'sans-serif'; // css font-family
+            var fontWeight = 'normal';     // css font-weight
+            var tinySDFGenerator = new TinySDF(fontsize, buffer, radius, cutoff, fontFamily, fontWeight);
+
+            //var oneSDF = tinySDFGenerator.draw('泽');
+            var oneSDF = tinySDFGenerator.draw('J');
+            // returns a Uint8ClampedArray array of alpha values (0–255) for a size x size square grid
+
+            var billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
+            billboards._sdfOutlineWidth = viewModel.sdfOutlineWidth;
+            billboards._sdfEdge = viewModel.sdfEdge
+            billboards._sdf = true;
+
+
+            var position = Cesium.Cartesian3.fromDegrees(-75.1641667, 40.0);
+            var billboard = billboards.add({
+               position: position,
+               image : getImage(oneSDF, tinySDFGenerator.size),
+               scale: 8
+            });
+
+            Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
+                function(newValue) {
+                    billboards._sdfEdge = parseFloat(newValue);
+                }
+            );
+
+            Cesium.knockout.getObservable(viewModel, 'sdfOutlineWidth').subscribe(
+                function(newValue) {
+                    billboards._sdfOutlineWidth = parseFloat(newValue);
+                }
+            );
+
+            Cesium.knockout.getObservable(viewModel, 'sdfSmoothing').subscribe(
+                function(newValue) {
+                    billboards._sdfSmoothing = 1.0 / parseFloat(newValue);
+                }
+            );
+
+            Cesium.knockout.getObservable(viewModel, 'sdfOutlineColor').subscribe(
+                function(newValue) {
+                    billboards._sdfOutlineColor = getColor(newValue, 1.0);
+                }
+            );
+
+
+            //Sandcastle_End
+            Sandcastle.finishedLoading();
+        }
+        if (typeof Cesium !== 'undefined') {
+            startup(Cesium);
+        } else if (typeof require === 'function') {
+            require(['Cesium'], startup);
+        }
+    </script>
+</body>
+
+</html>
