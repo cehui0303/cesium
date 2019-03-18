@@ -250,10 +250,10 @@
         }
 
 
-
-            var fontsize = 24; // Font size in pixels
+            var resizeScale = 1.0
+            var fontsize = 24 * resizeScale; // Font size in pixels
             var buffer = 3;    // Whitespace buffer around a glyph in pixels
-            var radius = 8;    // How many pixels around the glyph shape to use for encoding distance
+            var radius = 8 * resizeScale;    // How many pixels around the glyph shape to use for encoding distance
             var cutoff = 0.25  // How much of the radius (relative) is used for the inside part the glyph
 
             var fontFamily = 'sans-serif'; // css font-family
