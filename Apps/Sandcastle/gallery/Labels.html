@@ -70,6 +70,12 @@
 function startup(Cesium) {
     'use strict';
 //Sandcastle_Begin
+
+function getColor(colorName, alpha) {
+    var color = Cesium.Color[colorName.toUpperCase()];
+    return Cesium.Color.fromAlpha(color, parseFloat(alpha));
+}
+
 var viewer = new Cesium.Viewer('cesiumContainer');
 
 // The viewModel tracks the state of our mini application.
