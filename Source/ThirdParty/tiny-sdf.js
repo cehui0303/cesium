@@ -141,6 +141,7 @@ define([], function() {
         }
     }
 
-    return calcSDF;
+    //return calcSDF;
+    return TinySDF;
 });
 

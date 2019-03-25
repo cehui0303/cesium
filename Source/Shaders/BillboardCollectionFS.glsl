@@ -62,8 +62,6 @@ void main()
     color *= czm_gammaCorrect(v_color);
 
 #ifdef SDF
-    // https://github.com/libgdx/libgdx/wiki/Distance-field-fonts
-    vec4 outlineColor = vec4(1.0, 0.0, 0.0, 1.0);
 
     float distance = color.a;
 
@@ -76,13 +74,9 @@ void main()
 
     // sdf with outline
     float outlineFactor = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
-    vec4 finalColor = mix(u_sdfOutlineColor, v_color, outlineFactor);
+    vec4 finalColor = mix(u_sdfOutlineColor, color, outlineFactor);
     float alpha = smoothstep(u_sdfOutlineWidth - u_sdfSmoothing, u_sdfOutlineWidth + u_sdfSmoothing, distance);
     color = vec4(finalColor.rgb, finalColor.a * alpha);
-
-    float gamma = 9.0;
-    vec3 gammaVec = vec3(1.0 / gamma, 1.0 / gamma, 1.0/ gamma);
-    color.rgb = pow(color.rgb, gammaVec);
 #endif
 
 // Fully transparent parts of the billboard are not pickable.

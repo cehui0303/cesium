@@ -8,6 +8,7 @@ define([
         '../Core/destroyObject',
         '../Core/DeveloperError',
         '../Core/Matrix4',
+        '../ThirdParty/measureText',
         '../Core/writeTextToCanvas',
         './BillboardCollection',
         './BlendOption',
@@ -29,6 +30,7 @@ define([
         destroyObject,
         DeveloperError,
         Matrix4,
+        measureText,
         writeTextToCanvas,
         BillboardCollection,
         BlendOption,
@@ -39,7 +41,7 @@ define([
         TextureAtlas,
         VerticalOrigin,
         bitmapSDF,
-        tinySDF) {
+        TinySDF) {
     'use strict';
 
     // A glyph represents a single character in a particular label.  It may or may
@@ -83,9 +85,20 @@ define([
         });
     }
 
+    var fontsize = 48; // Font size in pixels
+    var buffer = 3;    // Whitespace buffer around a glyph in pixels
+    var radius = 8;    // How many pixels around the glyph shape to use for encoding distance
+    var cutoff = 0.25  // How much of the radius (relative) is used for the inside part the glyph
+
+    var fontFamily = 'sans-serif'; // css font-family
+    var fontWeight = 'normal';     // css font-weight
+    var tinySDFGenerator = new TinySDF(fontsize, buffer, radius, cutoff, fontFamily, fontWeight);
+
     // reusable object for calling writeTextToCanvas
     var writeTextToCanvasParameters = {};
     function createGlyphCanvas(character, font, fillColor, outlineColor, outlineWidth, style, verticalOrigin) {
+
+        /*
         writeTextToCanvasParameters.font = font;
         writeTextToCanvasParameters.fillColor = fillColor;
         writeTextToCanvasParameters.strokeColor = outlineColor;
@@ -104,7 +117,68 @@ define([
         writeTextToCanvasParameters.fill = style === LabelStyle.FILL || style === LabelStyle.FILL_AND_OUTLINE;
         writeTextToCanvasParameters.stroke = style === LabelStyle.OUTLINE || style === LabelStyle.FILL_AND_OUTLINE;
 
-        return writeTextToCanvas(character, writeTextToCanvasParameters);
+        var retCanvas = writeTextToCanvas(character, writeTextToCanvasParameters);
+        */
+
+
+        var oneSDF = tinySDFGenerator.draw(character);
+        var canvas = tinySDFGenerator.canvas;
+        var ctx = canvas.getContext('2d');
+        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < canvas.width; i++) {
+            for (var j = 0; j < canvas.height; j++) {
+                var baseIndex = (j * canvas.width + i);
+                var alpha = oneSDF[baseIndex];
+                imgData.data[baseIndex * 4 + 3] = alpha;
+            }
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        var width = ctx.measureText(character).width;
+        tinySDFGenerator.canvas.dimensions = {
+            // This is just used for kerning it looks like.
+            bounds: {
+                //minx: canvas.width / 2.0 - width / 2.0,
+                //maxx: canvas.width / 2.0 + width / 2.0, // Best guess
+                minx: 0,
+                maxx: canvas.width,
+                miny: 0,
+                maxy: canvas.height
+            },
+            width: width,
+            height: canvas.height,
+            //leading: 0,
+            ascent: 0,
+            descent: 0,
+            fontSize: fontsize
+        };
+
+
+        //console.log('Character ' + character);
+        //console.log('Original ' + JSON.stringify(retCanvas.dimensions));
+        //tinySDFGenerator.canvas.dimensions = retCanvas.dimensions;
+
+        /*
+        tinySDFGenerator.canvas.dimensions = {
+            bounds: {
+                minx: 0,
+                maxx: tinySDFGenerator.canvas.width, // Best guess
+                miny: 0,
+                maxy: tinySDFGenerator.canvas.height
+            },
+            width: 30,
+            height: 30,
+            leading: 0,
+            ascent: 30,
+            descent: 0,
+            fontSize: '48'
+        };
+        tinySDFGenerator.canvas.dimensions.minx = retCanvas.dimensions.bounds.minx;
+        tinySDFGenerator.canvas.dimensions.maxx = retCanvas.dimensions.bounds.maxx;
+        tinySDFGenerator.canvas.dimensions.maxx = retCanvas.dimensions.bounds.maxx;
+        */
+
+        return tinySDFGenerator.canvas;
     }
 
     function unbindGlyph(labelCollection, glyph) {
@@ -127,14 +201,6 @@ define([
     function addGlyphToTextureAtlas(textureAtlas, id, canvas, glyphTextureInfo) {
         textureAtlas.addImage(id, canvas).then(function(index) {
             glyphTextureInfo.index = index;
-        });
-    }
-
-    function addImageDataToCanvas(imageData, textureAtlas, id, canvas, glyphTextureInfo) {
-        createImageBitmap(imageData).then(function(imgBitmap) {
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height);
-            addGlyphToTextureAtlas(textureAtlas, id, canvas, glyphTextureInfo);
         });
     }
 
@@ -227,7 +293,7 @@ define([
                 glyphTextureCache[id] = glyphTextureInfo;
 
                 if (canvas.width > 0 && canvas.height > 0) {
-
+                    /*
                     // Get the canvas image data
                     var ctx = canvas.getContext('2d');
                     var sdf = true;
@@ -249,37 +315,9 @@ define([
                         }
                         ctx.putImageData(imgData, 0, 0);
                     }
+                    */
 
                     addGlyphToTextureAtlas(labelCollection._textureAtlas, id, canvas, glyphTextureInfo);
-
-                    /*
-
-                    // Use tinysdf to generate a high res glyph
-                    var char = labelCollection._tinySDF.draw(character);
-                    // Create an ImageData from the array
-                    var dataWidth = labelCollection._tinySDF.size;
-                    var dataHeight = labelCollection._tinySDF.size;
-                    var imgArr = new Uint8ClampedArray(dataWidth * dataHeight * 4);
-                    for (var i = 0; i < dataWidth; i++) {
-                        for (var j = 0; j < dataHeight; j++) {
-                            imgArr[j * dataWidth * 4 + i * 4 + 0] = 255;//char[j * dataWidth + i];
-                            imgArr[j * dataWidth * 4 + i * 4 + 1] = 255;//char[j * dataWidth + i];
-                            imgArr[j * dataWidth * 4 + i * 4 + 2] = 255;//char[j * dataWidth + i];
-                            imgArr[j * dataWidth * 4 + i * 4 + 3] = char[j * dataWidth + i];
-                        }
-                    }
-                    var data = new ImageData(imgArr, dataWidth, dataHeight);
-
-                    addImageDataToCanvas(data, labelCollection._textureAtlas, id, canvas, glyphTextureInfo);
-                    */
-
-                    /*
-                    createImageBitmap(data).then(function(imgBitmap) {
-                        ctx.drawImage(imgBitmap, 0, 0, canvas.width, canvas.height);
-                        addGlyphToTextureAtlas(labelCollection._textureAtlas, id, canvas, glyphTextureInfo);
-                        console.log("Done " + character);
-                    });
-                    */
                 }
             }
 
@@ -322,6 +360,8 @@ define([
                     glyph.billboard = billboard;
                 }
 
+                // Added to do coloring
+                billboard.color = label._fillColor;
                 billboard.show = label._show;
                 billboard.position = label._position;
                 billboard.eyeOffset = label._eyeOffset;
@@ -457,7 +497,9 @@ define([
                 //as well as any applied scale.
                 if (glyphIndex < glyphLength - 1) {
                     var nextGlyph = glyphs[glyphIndex + 1];
+
                     glyphPixelOffset.x += ((dimensions.width - dimensions.bounds.minx) + nextGlyph.dimensions.bounds.minx) * scale * resolutionScale;
+                    //glyphPixelOffset.x += dimensions.width * scale * resolutionScale;
                 }
             }
         }
@@ -588,7 +630,7 @@ define([
         this._billboardCollection.destroyTextureAtlas = false;
         this._billboardCollection._sdf = true;
         this._billboardCollection._sdfEdge = 0.75;
-        this._billboardCollection._sdfOutlineWidth = 0.74;
+        this._billboardCollection._sdfOutlineWidth = this._billboardCollection._sdfEdge;
 
 
         this._spareBillboards = [];
