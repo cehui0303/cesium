@@ -58,23 +58,17 @@ float getGlobeDepth(vec2 adjustedST, vec2 depthLookupST, bool applyTranslate, ve
 void main()
 {
     vec4 color = texture2D(u_atlas, v_textureCoordinates);
-    color = czm_gammaCorrect(color);
-    color *= czm_gammaCorrect(v_color);
+    //color = vec4(color.r, color.g, color.b, color.a);
+    //color = czm_gammaCorrect(color);
+    //color *= czm_gammaCorrect(v_color);
 
 #ifdef SDF
 
-    float distance = color.a;
-
-    // Regular SDF
-
-    /*
-    float alpha = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
-    color = vec4(v_color.rgb, alpha);
-    */
+    float distance = color.r;
 
     // sdf with outline
     float outlineFactor = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
-    vec4 finalColor = mix(u_sdfOutlineColor, color, outlineFactor);
+    vec4 finalColor = mix(u_sdfOutlineColor, v_color, outlineFactor);
     float alpha = smoothstep(u_sdfOutlineWidth - u_sdfSmoothing, u_sdfOutlineWidth + u_sdfSmoothing, distance);
     color = vec4(finalColor.rgb, finalColor.a * alpha);
 #endif
