@@ -1439,6 +1439,26 @@ define([
         boundingVolume.radius += size + offset;
     }
 
+    function createDebugCommand(billboardCollection, context) {
+        var fs;
+        fs = 'uniform sampler2D billboard_texture; \n' +
+             'varying vec2 v_textureCoordinates; \n' +
+             'void main() \n' +
+             '{ \n' +
+             '    gl_FragColor = texture2D(billboard_texture, v_textureCoordinates); \n' +
+             '} \n';
+
+        var drawCommand = context.createViewportQuadCommand(fs, {
+            uniformMap : {
+                billboard_texture : function() {
+                    return billboardCollection._textureAtlas.texture;
+                }
+            }
+        });
+        drawCommand.pass = Pass.OVERLAY;
+        return drawCommand;
+    }
+
     var scratchWriterArray = [];
 
     /**
@@ -1900,6 +1920,14 @@ define([
                 }
 
                 commandList.push(command);
+            }
+
+            if (this.debug) {
+                if (this.debugCommand === undefined) {
+                    this.debugCommand = createDebugCommand(this, frameState.context);
+                }
+
+                commandList.push(this.debugCommand);
             }
         }
     };

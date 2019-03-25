@@ -19,6 +19,13 @@
 <body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
 <style>
     @import url(../templates/bucket.css);
+
+    #toolbar {
+        background: rgba(42, 42, 42, 0.8);
+        padding: 4px;
+        border-radius: 4px;
+    }
+
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
@@ -64,6 +71,18 @@
             <td><select data-bind="options: sdfOutlineColors, value: sdfOutlineColor"></select></td>
         </tr>
 
+        <tr>
+            <td class="header">Texture Atlas Stats</td>
+        </tr>
+        <tr>
+            <td>
+                <div id="atlasStats">
+                </div>
+            </td>
+        </tr>
+
+
+
     </tbody>
 </div>
 <script id="cesium_sandcastle_script">
@@ -107,6 +126,9 @@ var label = labels.add({
 });
 
 
+var atlasStats = document.getElementById("atlasStats");
+
+
 Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
     function(newValue) {
         labels._billboardCollection._sdfEdge = parseFloat(newValue);
@@ -136,6 +158,19 @@ Cesium.knockout.getObservable(viewModel, 'sdfOutlineColor').subscribe(
         labels._billboardCollection._sdfOutlineColor = getColor(newValue, 1.0);
     }
 );
+
+Sandcastle.addToggleButton('Debug Atlas', labels._billboardCollection.debug, function(checked) {
+    labels._billboardCollection.debug = checked;
+});
+
+
+viewer.scene.preUpdate.addEventListener(function(scene, time) {
+    if (labels._textureAtlas) {
+        var info = 'Number Of Images=' + labels._textureAtlas.numberOfImages + '<br/>';
+        info += 'Dimensions ' + labels._textureAtlas._texture.width + ' x ' + labels._textureAtlas._texture.height;
+        atlasStats.innerHTML = info;
+    }
+});
 
 //Sandcastle_End
     Sandcastle.finishedLoading();
