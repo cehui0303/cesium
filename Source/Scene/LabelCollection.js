@@ -221,16 +221,19 @@ define([
             var style = label._style;
             var verticalOrigin = label._verticalOrigin;
 
+            console.log(font);
+
+            // jb TODO:  This is where the character cache happens so we can figure out how/why to generate new chars or not.
             // retrieve glyph dimensions and texture index (if the canvas has area)
             // from the glyph texture cache, or create and add if not present.
             var id = JSON.stringify([
                                      character,
-                                     font,
-                                     fillColor.toRgba(),
-                                     outlineColor.toRgba(),
-                                     outlineWidth,
-                                     +style,
-                                     +verticalOrigin
+                                     font
+                                     //fillColor.toRgba(),
+                                     //outlineColor.toRgba(),
+                                     //outlineWidth,
+                                     //+style,
+                                     //+verticalOrigin
                                     ]);
 
             var glyphTextureInfo = glyphTextureCache[id];
