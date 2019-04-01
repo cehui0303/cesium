@@ -6,8 +6,6 @@ uniform vec4 u_highlightColor;
 
 #ifdef SDF
 uniform float u_sdfEdge;
-uniform float u_sdfOutlineWidth;
-uniform vec4 u_sdfOutlineColor;
 uniform float u_sdfSmoothing;
 #endif
 

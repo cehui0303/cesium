@@ -322,8 +322,6 @@ define([
 
         this._highlightColor = Color.clone(Color.WHITE); // Only used by Vector3DTilePoints
         this._sdfEdge = defaultValue(options.sdfEdge, 0.5);
-        this._sdfOutlineWidth = defaultValue(options.sdfOutlineWidth, 0.0);
-        this._sdfOutlineColor = Color.clone(Color.RED);
         this._sdfSmoothing = defaultValue(options.sdfSmoothing, 1.0/64.0);
 
         var that = this;
@@ -336,12 +334,6 @@ define([
             },
             u_sdfEdge: function() {
                 return that._sdfEdge;
-            },
-            u_sdfOutlineWidth: function() {
-                return that._sdfOutlineWidth;
-            },
-            u_sdfOutlineColor: function() {
-                return that._sdfOutlineColor;
             },
             u_sdfSmoothing: function() {
                 return that._sdfSmoothing;
