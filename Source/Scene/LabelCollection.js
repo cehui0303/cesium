@@ -102,7 +102,7 @@ define([
         return document.defaultView.getComputedStyle(element,null).getPropertyValue(property);
     }
 
-    function parseFont(font) {
+    function getFontInfo(font) {
         var div = document.createElement('div');
         div.style.position = 'absolute';
         div.style.opacity = 0;
@@ -123,25 +123,23 @@ define([
         };
     }
 
-    function getOrCreateGlyphGenerator(font) {
-        var parsed = parseFont(font);
-
+    function getOrCreateGlyphGenerator(fontInfo) {
         var id = JSON.stringify([
-            parsed.fontFamily,
-            parsed.fontStyle,
-            parsed.fontWeight
+            fontInfo.fontFamily,
+            fontInfo.fontStyle,
+            fontInfo.fontWeight
         ]);
 
         var generator = glyphGenerators[id];
         if (!defined(generator)) {
-            generator = new TinySDF(fontsize, buffer, radius, cutoff, parsed.fontFamily, parsed.fontWeight, parsed.fontStyle);
+            generator = new TinySDF(fontsize, buffer, radius, cutoff, fontInfo.fontFamily, fontInfo.fontWeight, fontInfo.fontStyle);
             glyphGenerators[id] = generator;
         }
         return generator;
     }
 
-    function getSDF(character, font) {
-        var generator = getOrCreateGlyphGenerator(font);
+    function getSDF(character, fontInfo) {
+        var generator = getOrCreateGlyphGenerator(fontInfo);
 
         var canvas = generator.canvas;
 
@@ -260,12 +258,18 @@ define([
             var character = text.charAt(textIndex);
             var font = label._font;
 
+            // TODO:  Cache this fontinfo instead of regenning it every time.
+            var fontInfo = getFontInfo(font);
+
             // jb TODO:  This is where the character cache happens so we can figure out how/why to generate new chars or not.
             // retrieve glyph dimensions and texture index (if the canvas has area)
             // from the glyph texture cache, or create and add if not present.
+            // TODO also don't use the raw font, use the id of the fontinfo instead.
             var id = JSON.stringify([
                                      character,
-                                     font
+                                     fontInfo.fontFamily,
+                                     fontInfo.fontStyle,
+                                     fontInfo.fontWeight
                                     ]);
 
             var glyphTextureInfo = glyphTextureCache[id];
@@ -383,7 +387,11 @@ define([
                 billboard.horizontalOrigin = HorizontalOrigin.LEFT;
                 billboard.verticalOrigin = label._verticalOrigin;
                 billboard.heightReference = label._heightReference;
-                billboard.scale = label._scale;
+
+                // Compute a font size scale relative to the sdf font generated size.
+                var relativeSize = fontInfo.fontSize / fontsize;
+
+                billboard.scale = label._scale * relativeSize;
                 billboard.pickPrimitive = label;
                 billboard.id = label._id;
                 billboard.image = id;
@@ -457,7 +465,8 @@ define([
         lineWidths.push(lastLineWidth);
         var maxLineHeight = maxGlyphY + maxGlyphDescent;
 
-        var scale = label._scale;
+        // Use the billboard scale b/c it's going to include the relative scale of the font size as well.
+        var scale = glyph.billboard.scale;//label._scale;
         var horizontalOrigin = label._horizontalOrigin;
         var verticalOrigin = label._verticalOrigin;
         var lineIndex = 0;
