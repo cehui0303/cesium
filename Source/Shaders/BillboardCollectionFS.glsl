@@ -84,6 +84,19 @@ void main()
     vec4 finalColor = mix(outlineColor, v_color, outlineFactor);
     float alpha = smoothstep(outlineEdge - u_sdfSmoothing, outlineEdge + u_sdfSmoothing, distance);
     color = vec4(finalColor.rgb, finalColor.a * alpha);
+
+    // Drop shadowing
+    /*
+    const vec2 shadowOffset = vec2(0.01, -0.01);
+    const float shadowSmoothing = 0.1;
+    const vec4 shadowColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+    float shadowDistance = texture2D(u_atlas, v_textureCoordinates - shadowOffset).a;
+    float shadowAlpha = smoothstep(u_sdfEdge - shadowSmoothing, u_sdfEdge + shadowSmoothing, shadowDistance);
+    vec4 shadow = vec4(shadowColor.rgb, shadowColor.a * shadowAlpha);
+    color = mix(shadow, color, color.a);
+    */
+
 #endif
 
 // Fully transparent parts of the billboard are not pickable.
