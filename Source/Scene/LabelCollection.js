@@ -87,22 +87,66 @@ define([
         });
     }
 
-    //var fontsize = 58; // Font size in pixels
     var fontsize = 48; // Font size in pixels
     var buffer = 3;    // Whitespace buffer around a glyph in pixels
     var radius = 8;    // How many pixels around the glyph shape to use for encoding distance
-    var cutoff = 0.25  // How much of the radius (relative) is used for the inside part the glyph
+    var cutoff = 0.25;  // How much of the radius (relative) is used for the inside part the glyph
 
-    var fontFamily = 'sans-serif'; // css font-family
-    var fontWeight = 'normal';     // css font-weight
-    var tinySDFGenerator = new TinySDF(fontsize, buffer, radius, cutoff, fontFamily, fontWeight);
+    //var fontFamily = 'sans-serif'; // css font-family
+    //var fontWeight = 'normal';     // css font-weight
+    //var tinySDFGenerator = new TinySDF(fontsize, buffer, radius, cutoff, fontFamily, fontWeight);
 
-    // reusable object for calling writeTextToCanvas
-    function createGlyphCanvas(character, font, fillColor, outlineColor, outlineWidth, style, verticalOrigin) {
-        var canvas = tinySDFGenerator.canvas;
+    var glyphGenerators = {};
+
+    function getCSSValue(element, property) {
+        return document.defaultView.getComputedStyle(element,null).getPropertyValue(property);
+    }
+
+    function parseFont(font) {
+        var div = document.createElement('div');
+        div.style.position = 'absolute';
+        div.style.opacity = 0;
+        div.style.font = font;
+        document.body.appendChild(div);
+
+        var fontFamily = getCSSValue(div,'font-family');
+        var fontSize = getCSSValue(div,'font-size').replace('px','');
+        var fontStyle = getCSSValue(div,'font-style');
+        var fontWeight = getCSSValue(div,'font-weight');
+
+        document.body.removeChild(div);
+        return {
+            fontFamily: fontFamily,
+            fontSize: fontSize,
+            fontStyle: fontStyle,
+            fontWeight: fontWeight
+        };
+    }
+
+    function getOrCreateGlyphGenerator(font) {
+        var parsed = parseFont(font);
+
+        var id = JSON.stringify([
+            parsed.fontFamily,
+            parsed.fontStyle,
+            parsed.fontWeight
+        ]);
+
+        var generator = glyphGenerators[id];
+        if (!defined(generator)) {
+            generator = new TinySDF(fontsize, buffer, radius, cutoff, parsed.fontFamily, parsed.fontWeight, parsed.fontStyle);
+            glyphGenerators[id] = generator;
+        }
+        return generator;
+    }
+
+    function getSDF(character, font) {
+        var generator = getOrCreateGlyphGenerator(font);
+
+        var canvas = generator.canvas;
 
         // Draw the character and get an alpha array
-       var oneSDF = tinySDFGenerator.draw(character);
+       var oneSDF = generator.draw(character);
        var ctx = canvas.getContext('2d');
        var width = ctx.measureText(character).width;
         var dimensions = {
@@ -215,11 +259,6 @@ define([
         for (textIndex = 0; textIndex < textLength; ++textIndex) {
             var character = text.charAt(textIndex);
             var font = label._font;
-            var fillColor = label._fillColor;
-            var outlineColor = label._outlineColor;
-            var outlineWidth = label._outlineWidth;
-            var style = label._style;
-            var verticalOrigin = label._verticalOrigin;
 
             // jb TODO:  This is where the character cache happens so we can figure out how/why to generate new chars or not.
             // retrieve glyph dimensions and texture index (if the canvas has area)
@@ -227,16 +266,11 @@ define([
             var id = JSON.stringify([
                                      character,
                                      font
-                                     //fillColor.toRgba(),
-                                     //outlineColor.toRgba(),
-                                     //outlineWidth,
-                                     //+style,
-                                     //+verticalOrigin
                                     ]);
 
             var glyphTextureInfo = glyphTextureCache[id];
             if (!defined(glyphTextureInfo)) {
-                var sdfInfo = createGlyphCanvas(character, font, fillColor, outlineColor, outlineWidth, style, verticalOrigin);
+                var sdfInfo = getSDF(character, font);
                 var sdf = sdfInfo.sdf;
 
                 var width = sdfInfo.dimensions.bounds.maxy;
