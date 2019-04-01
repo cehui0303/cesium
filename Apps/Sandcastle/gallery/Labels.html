@@ -42,7 +42,7 @@
         <tr>
             <td>SDF Outline</td>
             <td>
-                <input type="range" min="0.0" max="1.0" step="0.01" data-bind="value: sdfOutlineWidth, valueUpdate: 'input'">
+                <input type="range" min="0.0" max="8.0" step="0.01" data-bind="value: sdfOutlineWidth, valueUpdate: 'input'">
                 <input type="text" size="5" data-bind="value: sdfOutlineWidth">
             </td>
         </tr>
@@ -125,6 +125,16 @@ var label = labels.add({
   font : '48px Calibri'
 });
 
+var morgantown = labels.add({
+  position : Cesium.Cartesian3.fromDegrees(-79.9559, 39.6295),
+  text : 'Morgantown',
+  scale: 0.6,
+  fillColor: Cesium.Color.YELLOW,
+  font : '48px Calibri',
+  outlineColor: Cesium.Color.BLUE,
+  outlineWidth: 2.0
+});
+
 
 var atlasStats = document.getElementById("atlasStats");
 
@@ -137,7 +147,7 @@ Cesium.knockout.getObservable(viewModel, 'sdfEdge').subscribe(
 
 Cesium.knockout.getObservable(viewModel, 'sdfOutlineWidth').subscribe(
     function(newValue) {
-        labels._billboardCollection._sdfOutlineWidth = parseFloat(newValue);
+        label.outlineWidth = parseFloat(newValue);
     }
 );
 
@@ -155,7 +165,7 @@ Cesium.knockout.getObservable(viewModel, 'sdfSmoothing').subscribe(
 
 Cesium.knockout.getObservable(viewModel, 'sdfOutlineColor').subscribe(
     function(newValue) {
-        labels._billboardCollection._sdfOutlineColor = getColor(newValue, 1.0);
+        label.outlineColor = getColor(newValue, 1.0);
     }
 );
 
@@ -163,12 +173,19 @@ Sandcastle.addToggleButton('Debug Atlas', labels._billboardCollection.debug, fun
     labels._billboardCollection.debug = checked;
 });
 
+var delta = 0.1;
+
 
 viewer.scene.preUpdate.addEventListener(function(scene, time) {
     if (labels._textureAtlas) {
         var info = 'Number Of Images=' + labels._textureAtlas.numberOfImages + '<br/>';
         info += 'Dimensions ' + labels._textureAtlas._texture.width + ' x ' + labels._textureAtlas._texture.height;
         atlasStats.innerHTML = info;
+    }
+
+    morgantown.outlineWidth += delta;
+    if (morgantown.outlineWidth >= 4.0 || morgantown.outlineWidth <= 0.0) {
+        delta *= -1.0;
     }
 });
 

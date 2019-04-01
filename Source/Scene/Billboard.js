@@ -196,6 +196,9 @@ define([
 
         this._clusterShow = true;
 
+        this._outlineColor = Color.clone(defaultValue(options.outlineColor, Color.BLACK));
+        this._outlineWidth = defaultValue(options.outlineWidth, 0.0);
+
         this._updateClamping();
     }
 
@@ -216,7 +219,8 @@ define([
     var DISTANCE_DISPLAY_CONDITION = Billboard.DISTANCE_DISPLAY_CONDITION = 14;
     var DISABLE_DEPTH_DISTANCE = Billboard.DISABLE_DEPTH_DISTANCE = 15;
     Billboard.TEXTURE_COORDINATE_BOUNDS = 16;
-    Billboard.NUMBER_OF_PROPERTIES = 17;
+    var SDF = Billboard.SDF = 17;
+    Billboard.NUMBER_OF_PROPERTIES = 18;
 
     function makeDirty(billboard, propertyChanged) {
         var billboardCollection = billboard._billboardCollection;
@@ -942,6 +946,37 @@ define([
                 if (this._clusterShow !== value) {
                     this._clusterShow = value;
                     makeDirty(this, SHOW_INDEX);
+                }
+            }
+        },
+
+        outlineColor : {
+            get : function() {
+                return this._outlineColor;
+            },
+            set : function(value) {
+                //>>includeStart('debug', pragmas.debug);
+                if (!defined(value)) {
+                    throw new DeveloperError('value is required.');
+                }
+                //>>includeEnd('debug');
+
+                var outlineColor = this._outlineColor;
+                if (!Color.equals(outlineColor, value)) {
+                    Color.clone(value, outlineColor);
+                    makeDirty(this, SDF);
+                }
+            }
+        },
+
+        outlineWidth : {
+            get : function() {
+                return this._outlineWidth;
+            },
+            set : function(value) {
+                if (this._outlineWidth !== value) {
+                    this._outlineWidth = value;
+                    makeDirty(this, SDF);
                 }
             }
         }

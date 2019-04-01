@@ -14,6 +14,7 @@ uniform float u_sdfSmoothing;
 varying vec2 v_textureCoordinates;
 varying vec4 v_pickColor;
 varying vec4 v_color;
+varying vec4 v_sdf;
 
 #ifdef FRAGMENT_DEPTH_CHECK
 varying vec4 v_textureCoordinateBounds;                  // the min and max x and y values for the texture coordinates
@@ -66,10 +67,24 @@ void main()
 
     float distance = color.r;
 
+    vec4 outlineColor = vec4(v_sdf.xyz, 1.0);
+    float outlineWidth = v_sdf.w;
+
     // sdf with outline
+    /*
     float outlineFactor = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
     vec4 finalColor = mix(u_sdfOutlineColor, v_color, outlineFactor);
     float alpha = smoothstep(u_sdfOutlineWidth - u_sdfSmoothing, u_sdfOutlineWidth + u_sdfSmoothing, distance);
+    color = vec4(finalColor.rgb, finalColor.a * alpha);
+    */
+
+    float spread = 8.0; // Needs to match radius in sdf generator.
+
+    float outlineEdge = u_sdfEdge - (outlineWidth / spread);
+
+    float outlineFactor = smoothstep(u_sdfEdge - u_sdfSmoothing, u_sdfEdge + u_sdfSmoothing, distance);
+    vec4 finalColor = mix(outlineColor, v_color, outlineFactor);
+    float alpha = smoothstep(outlineEdge - u_sdfSmoothing, outlineEdge + u_sdfSmoothing, distance);
     color = vec4(finalColor.rgb, finalColor.a * alpha);
 #endif
 
