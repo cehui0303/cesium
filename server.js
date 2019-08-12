@@ -159,6 +159,7 @@
         });
     });
 
+	argv.public = '126.33.9.198';
     var server = app.listen(argv.port, argv.public ? undefined : 'localhost', function() {
         if (argv.public) {
             console.log('Cesium development server running publicly.  Connect to http://localhost:%d/', server.address().port);
